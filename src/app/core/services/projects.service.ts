@@ -84,4 +84,48 @@ export class ProjectsService {
     this._projects.update((list) => list.filter((p) => p.id !== id));
     return of(undefined).pipe(delay(120));
   }
+
+  startFinalRender(id: string): Observable<CreativeContract | undefined> {
+    const finalVideo = {
+      status: 'rendering' as const,
+      progress: 0,
+      jobId: `render-${Date.now()}`,
+    };
+    this.update(id, { finalVideo, status: 'review' as const });
+    let progress = 0;
+    const tick = setInterval(() => {
+      progress = Math.min(100, progress + Math.random() * 12 + 3);
+      const current = this._projects().find((p) => p.id === id);
+      if (!current) {
+        clearInterval(tick);
+        return;
+      }
+      const done = progress >= 100;
+      this.update(id, {
+        finalVideo: {
+          ...current.finalVideo!,
+          progress,
+          status: done ? 'completed' : 'rendering',
+          uri: done
+            ? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+            : current.finalVideo?.uri,
+          thumbnailUri: done
+            ? current.scenes[0]?.thumbnailUrl ?? current.thumbnailUrl
+            : current.finalVideo?.thumbnailUri,
+          durationSec: done
+            ? current.scenes.reduce((sum, s) => sum + s.durationSec, 0)
+            : current.finalVideo?.durationSec,
+          renderedAt: done ? new Date().toISOString() : current.finalVideo?.renderedAt,
+        },
+        status: done ? ('completed' as const) : ('review' as const),
+      });
+      if (done) clearInterval(tick);
+    }, 500);
+    return of(this._projects().find((p) => p.id === id)).pipe(delay(80));
+  }
+
+  resetFinalRender(id: string): Observable<CreativeContract | undefined> {
+    this.update(id, { finalVideo: { status: 'not_started', progress: 0 } });
+    return of(this._projects().find((p) => p.id === id)).pipe(delay(60));
+  }
 }

@@ -12,6 +12,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { switchMap } from 'rxjs/operators';
 import { ProjectsService } from '../../core/services/projects.service';
 import { AssetsService } from '../../core/services/assets.service';
+import { ScenesService } from '../../core/services/scenes.service';
 import { ModelsService } from '../../core/services/models.service';
 import { ContractExportService } from '../../core/services/contract-export.service';
 import {
@@ -447,10 +448,17 @@ type StepKey = 'goal' | 'script' | 'style' | 'characters' | 'assets' | 'scenes' 
                 <p class="muted">Bring your own — or let AI generate. Each asset stores prompt, provider, and version.</p>
                 <div class="row" style="margin-top: 0.9rem">
                   <a routerLink="/assets" class="btn primary sm">Open asset library</a>
-                  <button class="btn sm">Upload files</button>
-                  <button class="btn sm">Connect Google Drive</button>
-                  <button class="btn sm">Stock providers</button>
+                  <button class="btn sm" (click)="triggerUpload()">+ Upload files</button>
+                  <input #fileInput type="file" multiple style="display: none"
+                    accept="image/*,video/*,audio/*"
+                    (change)="onFileUpload($event)"/>
+                  <button class="btn sm" (click)="generateSampleAsset()">✨ Generate image</button>
+                  <button class="btn sm" disabled title="Coming soon">Connect Drive</button>
+                  <button class="btn sm" disabled title="Coming soon">Stock providers</button>
                 </div>
+                @if (uploadStatus(); as status) {
+                  <p class="muted" style="font-size: 0.78rem; margin-top: 0.4rem">{{ status }}</p>
+                }
                 <div class="asset-strip" style="margin-top: 1rem">
                   @for (a of assets.assets().slice(0, 12); track a.id) {
                     <div class="asset-mini" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'">
@@ -469,28 +477,40 @@ type StepKey = 'goal' | 'script' | 'style' | 'characters' | 'assets' | 'scenes' 
                   <button class="btn primary sm" (click)="addScene()">+ Add scene</button>
                 </div>
                 <div class="scenes-list">
-                  @for (s of p.scenes; track s.id) {
-                    <a class="scene-row" [routerLink]="['/projects', p.id, 'scenes', s.id]">
-                      <div class="scene-thumb" [style.background-image]="s.thumbnailUrl ? 'url(' + s.thumbnailUrl + ')' : ''">
-                        <span class="scene-num">{{ s.index + 1 }}</span>
-                      </div>
-                      <div style="flex: 1; min-width: 0">
-                        <div class="row" style="gap: 0.4rem">
-                          <strong>{{ s.title }}</strong>
-                          <span class="chip" [class]="sceneStatusTone(s.review.status)">{{ s.review.status }}</span>
+                  @for (s of p.scenes; track s.id; let i = $index; let last = $last) {
+                    <div class="scene-row-wrap">
+                      <a class="scene-row" [routerLink]="['/projects', p.id, 'scenes', s.id]">
+                        <div class="scene-thumb" [style.background-image]="s.thumbnailUrl ? 'url(' + s.thumbnailUrl + ')' : ''">
+                          <span class="scene-num">{{ s.index + 1 }}</span>
                         </div>
-                        <div class="muted" style="font-size: 0.85rem">{{ s.objective }}</div>
-                        <div class="row" style="gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap">
-                          <span class="chip muted">{{ s.durationSec }}s</span>
-                          <span class="chip muted">{{ s.camera.shotType }}</span>
-                          <span class="chip muted">{{ s.objects.length }} objects</span>
-                          <span class="chip cyan">~{{ s.costEstimate ?? 0 }} credits</span>
+                        <div style="flex: 1; min-width: 0">
+                          <div class="row" style="gap: 0.4rem">
+                            <strong>{{ s.title }}</strong>
+                            <span class="chip" [class]="sceneStatusTone(s.review.status)">{{ s.review.status }}</span>
+                          </div>
+                          <div class="muted" style="font-size: 0.85rem">{{ s.objective }}</div>
+                          <div class="row" style="gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap">
+                            <span class="chip muted">{{ s.durationSec }}s</span>
+                            <span class="chip muted">{{ s.camera.shotType }}</span>
+                            <span class="chip muted">{{ s.objects.length }} objects</span>
+                            <span class="chip cyan">~{{ s.costEstimate ?? 0 }} credits</span>
+                          </div>
                         </div>
+                        <div class="row">
+                          <button class="iconbtn">→</button>
+                        </div>
+                      </a>
+                      <div class="scene-row-actions">
+                        <button class="iconbtn sm" title="Move up" [disabled]="i === 0"
+                          (click)="moveScene(s.id, -1); $event.stopPropagation()">↑</button>
+                        <button class="iconbtn sm" title="Move down" [disabled]="last"
+                          (click)="moveScene(s.id, 1); $event.stopPropagation()">↓</button>
+                        <button class="iconbtn sm" title="Duplicate"
+                          (click)="duplicateScene(s.id); $event.stopPropagation()">⧉</button>
+                        <button class="iconbtn sm danger" title="Delete"
+                          (click)="askDeleteScene(s.id); $event.stopPropagation()">🗑</button>
                       </div>
-                      <div class="row">
-                        <button class="iconbtn">→</button>
-                      </div>
-                    </a>
+                    </div>
                   }
                   @if (p.scenes.length === 0) {
                     <div class="empty-state">
@@ -501,6 +521,19 @@ type StepKey = 'goal' | 'script' | 'style' | 'characters' | 'assets' | 'scenes' 
                     </div>
                   }
                 </div>
+
+                @if (p.scenes.length > 0) {
+                  <div class="finalize-banner" [class.ready]="allScenesApproved(p)">
+                    <div>
+                      <strong>{{ allScenesApproved(p) ? 'All scenes approved 🎉' : 'Approval progress' }}</strong>
+                      <p class="muted" style="font-size: 0.82rem; margin: 4px 0 0">
+                        {{ approvedCount(p) }} / {{ p.scenes.length }} scenes approved.
+                        {{ allScenesApproved(p) ? "You're ready to render the final video." : 'Approve every scene to unlock final assembly.' }}
+                      </p>
+                    </div>
+                    <a class="btn cool" [routerLink]="['/projects', p.id, 'final']">🎞 Open final video</a>
+                  </div>
+                }
               }
 
               @case ('review') {
@@ -520,6 +553,13 @@ type StepKey = 'goal' | 'script' | 'style' | 'characters' | 'assets' | 'scenes' 
                   <div class="check-item" [class.ok]="p.characters.length > 0"><span class="dot"></span> At least one character</div>
                   <div class="check-item" [class.ok]="p.scenes.length > 0"><span class="dot"></span> At least one scene</div>
                   <div class="check-item" [class.ok]="p.creativeDirection.colorPalette.length >= 2"><span class="dot"></span> 2+ palette colors</div>
+                  <div class="check-item" [class.ok]="allScenesApproved(p)"><span class="dot"></span> All scenes approved</div>
+                </div>
+                <div class="row" style="margin-top: 1.2rem; gap: 0.5rem; flex-wrap: wrap">
+                  <a class="btn primary" [routerLink]="['/projects', p.id, 'final']">🎞 Open final-video assembly</a>
+                  @if (p.scenes.length > 0) {
+                    <a class="btn" [routerLink]="['/projects', p.id, 'scenes', p.scenes[0].id]">↺ Back to Scene 1</a>
+                  }
                 </div>
               }
             }
@@ -551,6 +591,21 @@ type StepKey = 'goal' | 'script' | 'style' | 'characters' | 'assets' | 'scenes' 
             </aside>
           }
         </div>
+
+        @if (deleteSceneId(); as did) {
+          <div class="modal-backdrop" (click)="deleteSceneId.set(null)">
+            <div class="modal" (click)="$event.stopPropagation()">
+              <strong style="font-family: var(--font-display); font-size: 1.05rem">Delete scene?</strong>
+              <p class="muted" style="margin-top: 0.4rem">
+                Removes this scene and its objects. This cannot be undone.
+              </p>
+              <div class="row" style="gap: 0.5rem; justify-content: flex-end; margin-top: 1rem">
+                <button class="btn" (click)="deleteSceneId.set(null)">Cancel</button>
+                <button class="btn danger" (click)="deleteSceneConfirmed(did)">Delete</button>
+              </div>
+            </div>
+          </div>
+        }
       </div>
     } @else {
       <div class="loading">
@@ -566,6 +621,7 @@ export class WizardComponent {
   private readonly router = inject(Router);
   private readonly projects = inject(ProjectsService);
   protected readonly assets = inject(AssetsService);
+  private readonly scenes = inject(ScenesService);
   protected readonly modelsService = inject(ModelsService);
   private readonly exportSvc = inject(ContractExportService);
 
@@ -578,6 +634,8 @@ export class WizardComponent {
   protected readonly selectedCharId = signal<string | null>(null);
   protected readonly showPickerForCharId = signal<string | null>(null);
   protected readonly generatingAvatarFor = signal<string | null>(null);
+  protected readonly uploadStatus = signal<string | null>(null);
+  protected readonly deleteSceneId = signal<string | null>(null);
 
   protected readonly imageAssets = computed(() =>
     this.assets.assets().filter((a) => a.type === 'image'),
@@ -858,6 +916,86 @@ export class WizardComponent {
       }
       this.generatingAvatarFor.set(null);
     });
+  }
+
+  protected allScenesApproved(p: CreativeContract): boolean {
+    return p.scenes.length > 0 && p.scenes.every((s) => s.review.status === 'approved');
+  }
+  protected approvedCount(p: CreativeContract): number {
+    return p.scenes.filter((s) => s.review.status === 'approved').length;
+  }
+
+  protected moveScene(sceneId: string, direction: -1 | 1) {
+    const p = this.project();
+    if (!p) return;
+    this.scenes.move(p.id, sceneId, direction).subscribe((scenes) => {
+      this.project.set({ ...p, scenes });
+    });
+  }
+  protected duplicateScene(sceneId: string) {
+    const p = this.project();
+    if (!p) return;
+    this.scenes.duplicate(p.id, sceneId).subscribe(() => {
+      this.projects.get(p.id).subscribe((np) => np && this.project.set(np));
+    });
+  }
+  protected askDeleteScene(sceneId: string) {
+    this.deleteSceneId.set(sceneId);
+  }
+  protected deleteSceneConfirmed(sceneId: string) {
+    const p = this.project();
+    if (!p) return;
+    this.scenes.remove(p.id, sceneId).subscribe((scenes) => {
+      this.project.set({ ...p, scenes });
+      this.deleteSceneId.set(null);
+    });
+  }
+
+  protected triggerUpload() {
+    const input = document.querySelector<HTMLInputElement>('input[type="file"]');
+    input?.click();
+  }
+  protected onFileUpload(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
+    this.uploadStatus.set(`Uploading ${files.length} file${files.length > 1 ? 's' : ''}…`);
+    let done = 0;
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUri = String(reader.result);
+        const type = file.type.startsWith('video/')
+          ? 'video'
+          : file.type.startsWith('audio/')
+            ? 'audio'
+            : 'image';
+        this.assets.upload({ type, name: file.name, uri: dataUri }).subscribe(() => {
+          done += 1;
+          if (done === files.length) {
+            this.uploadStatus.set(`Uploaded ${done} file${done > 1 ? 's' : ''} ✓`);
+            setTimeout(() => this.uploadStatus.set(null), 3000);
+          }
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+    input.value = '';
+  }
+  protected generateSampleAsset() {
+    this.uploadStatus.set('Generating image…');
+    this.assets
+      .generate({
+        type: 'image',
+        name: `wizard-generated-${Date.now()}.png`,
+        prompt: 'cinematic still, soft warm light, atmospheric, 35mm',
+        provider: 'midjourney',
+        model: 'Midjourney v7',
+      })
+      .subscribe(() => {
+        this.uploadStatus.set('Generated ✓');
+        setTimeout(() => this.uploadStatus.set(null), 2500);
+      });
   }
 
   protected addScene() {

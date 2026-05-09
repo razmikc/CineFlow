@@ -172,6 +172,24 @@ export interface SceneReview {
   comments?: string[];
 }
 
+export interface SceneKeyframe {
+  mode: ObjectMode;
+  description: string;
+  assetId?: string;
+  locked?: boolean;
+  prompt?: string;
+}
+
+export interface FinalVideo {
+  status: 'not_started' | 'queued' | 'rendering' | 'completed' | 'failed';
+  progress: number;
+  uri?: string;
+  thumbnailUri?: string;
+  durationSec?: number;
+  renderedAt?: string;
+  jobId?: string;
+}
+
 export interface Scene {
   id: string;
   index: number;
@@ -191,6 +209,9 @@ export interface Scene {
   review: SceneReview;
   costEstimate?: number;
   thumbnailUrl?: string;
+  startFrame?: SceneKeyframe;
+  endFrame?: SceneKeyframe;
+  promptOverride?: string;
 }
 
 export interface Asset {
@@ -224,6 +245,7 @@ export interface CreativeContract {
   createdAt: string;
   updatedAt: string;
   thumbnailUrl?: string;
+  finalVideo?: FinalVideo;
 }
 
 export interface GenerationJob {
