@@ -1,0 +1,672 @@
+// src/app/core/services/mock-data.ts
+var MOCK_AI_MODELS = [
+  {
+    id: "m-veo-3",
+    provider: "google",
+    name: "Veo 3",
+    version: "3.0",
+    capability: "text_to_video",
+    costPerUnit: 8,
+    unit: "second",
+    speed: "high_quality",
+    maxDuration: 8,
+    supportsStartEndFrame: true,
+    supportsCharacterReference: true,
+    description: "Cinematic realism with strong character continuity and start/end frame control."
+  },
+  {
+    id: "m-runway-gen4",
+    provider: "runway",
+    name: "Gen-4 Turbo",
+    version: "4.1",
+    capability: "image_to_video",
+    costPerUnit: 5,
+    unit: "second",
+    speed: "balanced",
+    maxDuration: 10,
+    supportsStartEndFrame: true,
+    supportsCharacterReference: true,
+    description: "Fast image-to-video with strong creative control and motion fidelity."
+  },
+  {
+    id: "m-kling-2",
+    provider: "kling",
+    name: "Kling 2.0 Master",
+    version: "2.0",
+    capability: "image_to_video",
+    costPerUnit: 4,
+    unit: "second",
+    speed: "balanced",
+    maxDuration: 10,
+    supportsStartEndFrame: true,
+    description: "High-motion, dynamic scenes with affordable pricing."
+  },
+  {
+    id: "m-luma-dream",
+    provider: "luma",
+    name: "Dream Machine",
+    version: "1.7",
+    capability: "image_to_video",
+    costPerUnit: 3,
+    unit: "second",
+    speed: "fast",
+    maxDuration: 5,
+    description: "Fast iteration loops; great for storyboarding and previews."
+  },
+  {
+    id: "m-mj-7",
+    provider: "midjourney",
+    name: "Midjourney v7",
+    version: "7.0",
+    capability: "text_to_image",
+    costPerUnit: 0.4,
+    unit: "image",
+    speed: "high_quality",
+    description: "Aesthetic-leading still images with rich style references."
+  },
+  {
+    id: "m-sdxl",
+    provider: "stability",
+    name: "Stable Diffusion 3.5",
+    version: "3.5",
+    capability: "text_to_image",
+    costPerUnit: 0.1,
+    unit: "image",
+    speed: "fast",
+    description: "Open and flexible image generation with style controls."
+  },
+  {
+    id: "m-leo-phoenix",
+    provider: "leonardo",
+    name: "Phoenix",
+    version: "1.0",
+    capability: "text_to_image",
+    costPerUnit: 0.3,
+    unit: "image",
+    speed: "balanced",
+    description: "Strong prompt adherence and consistent character renders."
+  },
+  {
+    id: "m-elevenlabs",
+    provider: "elevenlabs",
+    name: "Eleven Multilingual v3",
+    version: "3.0",
+    capability: "voice_clone",
+    costPerUnit: 0.3,
+    unit: "second",
+    speed: "balanced",
+    description: "Realistic multilingual voice cloning with emotional control."
+  },
+  {
+    id: "m-suno-v5",
+    provider: "suno",
+    name: "Suno v5",
+    version: "5.0",
+    capability: "music_generation",
+    costPerUnit: 1.5,
+    unit: "minute",
+    speed: "balanced",
+    description: "Soundtrack generation with lyrics and stem separation."
+  },
+  {
+    id: "m-udio",
+    provider: "udio",
+    name: "Udio Pro",
+    version: "2.0",
+    capability: "music_generation",
+    costPerUnit: 1.2,
+    unit: "minute",
+    speed: "balanced",
+    description: "Cinematic and ambient music generation."
+  },
+  {
+    id: "m-claude-opus",
+    provider: "anthropic",
+    name: "Claude Opus 4.7",
+    version: "4.7",
+    capability: "script_generation",
+    costPerUnit: 0.05,
+    unit: "kToken",
+    speed: "balanced",
+    description: "Long-form, narrative-aware script and scene breakdown."
+  },
+  {
+    id: "m-gpt5",
+    provider: "openai",
+    name: "GPT-5",
+    version: "5.0",
+    capability: "script_generation",
+    costPerUnit: 0.04,
+    unit: "kToken",
+    speed: "balanced",
+    description: "General-purpose creative writing with structured output."
+  },
+  {
+    id: "m-topaz-vid",
+    provider: "topaz",
+    name: "Video AI Upscale",
+    version: "5.0",
+    capability: "upscale",
+    costPerUnit: 0.5,
+    unit: "second",
+    speed: "high_quality",
+    description: "Frame interpolation and upscaling to 4K."
+  }
+];
+var MOCK_ASSETS = [
+  {
+    id: "asset-1",
+    type: "image",
+    name: "aram-reference.png",
+    source: "uploaded",
+    uri: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800",
+    thumbnail: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
+    tags: ["character", "hero", "portrait"],
+    createdAt: "2026-04-12T10:24:00Z"
+  },
+  {
+    id: "asset-2",
+    type: "image",
+    name: "old-stone-street-sunset.png",
+    source: "generated",
+    uri: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800",
+    thumbnail: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400",
+    provider: "midjourney",
+    model: "Midjourney v7",
+    prompt: "Old stone street at sunset, cinematic, warm light, mysterious mood",
+    tags: ["background", "street", "sunset", "cinematic"],
+    createdAt: "2026-04-12T11:02:00Z"
+  },
+  {
+    id: "asset-3",
+    type: "image",
+    name: "vintage-lamp.png",
+    source: "generated",
+    uri: "https://images.unsplash.com/photo-1542728928-0011f81446e5?w=800",
+    thumbnail: "https://images.unsplash.com/photo-1542728928-0011f81446e5?w=400",
+    provider: "leonardo",
+    model: "Phoenix",
+    prompt: "Vintage street lamp glowing softly, warm bulb, atmospheric",
+    tags: ["prop", "lamp", "cinematic"],
+    createdAt: "2026-04-12T11:13:00Z"
+  },
+  {
+    id: "asset-4",
+    type: "video",
+    name: "scene-1-preview.mp4",
+    source: "generated",
+    uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    thumbnail: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400",
+    provider: "google",
+    model: "Veo 3",
+    durationSec: 8,
+    tags: ["scene", "preview"],
+    createdAt: "2026-04-12T13:42:00Z"
+  },
+  {
+    id: "asset-5",
+    type: "audio",
+    name: "ambient-cinematic.mp3",
+    source: "generated",
+    uri: "https://www.soundjay.com/buttons/sounds/button-1.mp3",
+    provider: "suno",
+    model: "Suno v5",
+    durationSec: 60,
+    tags: ["music", "cinematic", "ambient"],
+    createdAt: "2026-04-11T09:21:00Z"
+  },
+  {
+    id: "asset-6",
+    type: "voice",
+    name: "aram-narration.mp3",
+    source: "generated",
+    uri: "https://www.soundjay.com/buttons/sounds/button-2.mp3",
+    provider: "elevenlabs",
+    model: "Eleven Multilingual v3",
+    durationSec: 6,
+    tags: ["voice", "narration", "hero"],
+    createdAt: "2026-04-12T12:14:00Z"
+  },
+  {
+    id: "asset-7",
+    type: "image",
+    name: "forest-path.png",
+    source: "library",
+    uri: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=800",
+    thumbnail: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=400",
+    tags: ["background", "forest", "nature"],
+    createdAt: "2026-04-09T16:00:00Z"
+  },
+  {
+    id: "asset-8",
+    type: "image",
+    name: "neon-city.png",
+    source: "generated",
+    uri: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=800",
+    thumbnail: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=400",
+    provider: "midjourney",
+    model: "Midjourney v7",
+    prompt: "Neon-lit cyberpunk city, rain reflections, cinematic, futuristic",
+    tags: ["background", "city", "neon", "cyberpunk"],
+    createdAt: "2026-04-08T20:11:00Z"
+  },
+  {
+    id: "asset-9",
+    type: "music",
+    name: "epic-trailer.mp3",
+    source: "library",
+    uri: "https://www.soundjay.com/buttons/sounds/button-3.mp3",
+    durationSec: 90,
+    tags: ["music", "epic", "trailer"],
+    createdAt: "2026-04-05T11:11:00Z"
+  },
+  {
+    id: "asset-10",
+    type: "image",
+    name: "female-hero.png",
+    source: "generated",
+    uri: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800",
+    thumbnail: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400",
+    provider: "leonardo",
+    model: "Phoenix",
+    prompt: "Strong female hero portrait, soft cinematic light, expressive eyes",
+    tags: ["character", "hero", "portrait"],
+    createdAt: "2026-04-10T08:42:00Z"
+  }
+];
+var MOCK_CHARACTERS = [
+  {
+    id: "hero",
+    name: "Aram",
+    description: "Armenian man, early 30s, expressive face, contemplative eyes",
+    referenceImages: ["asset-1"],
+    wardrobe: "dark coat, simple elegant style",
+    voice: {
+      mode: "generate",
+      provider: "elevenlabs",
+      voiceId: "voice-aram-01",
+      accent: "soft Armenian accent"
+    },
+    emotionProfile: "calm, curious, melancholic",
+    movementStyle: "measured, deliberate",
+    continuityLock: true
+  },
+  {
+    id: "companion",
+    name: "Lina",
+    description: "Energetic woman, late 20s, sharp features",
+    referenceImages: ["asset-10"],
+    wardrobe: "leather jacket, dark jeans",
+    voice: {
+      mode: "generate",
+      provider: "elevenlabs",
+      voiceId: "voice-lina-01",
+      accent: "neutral English"
+    },
+    emotionProfile: "confident, witty",
+    movementStyle: "fast, decisive",
+    continuityLock: true
+  }
+];
+var MOCK_SCENES = [
+  {
+    id: "scene-001",
+    index: 0,
+    title: "Opening at the old street",
+    objective: "Introduce hero and atmosphere",
+    durationSec: 8,
+    generationMode: "prepare_then_generate",
+    background: {
+      mode: "generate",
+      description: "old stone street at sunset, warm cinematic light",
+      assetId: "asset-2"
+    },
+    camera: {
+      shotType: "medium shot",
+      movement: "slow dolly-in",
+      lens: "35mm cinematic"
+    },
+    characters: [
+      { ref: "hero", emotion: "curious, calm", action: "walks slowly and looks around" }
+    ],
+    objects: [
+      {
+        id: "obj-bg",
+        type: "background",
+        name: "Stone Street",
+        description: "old stone street at sunset",
+        prompt: "A quiet old stone street at golden sunset, atmospheric, cinematic 35mm",
+        assetId: "asset-2",
+        status: "ready",
+        locked: true
+      },
+      {
+        id: "obj-hero",
+        type: "character",
+        name: "Aram (Hero)",
+        description: "Walks slowly, looks around with curiosity",
+        prompt: "Aram walking slowly down the street, curious gaze, cinematic",
+        status: "ready",
+        locked: true
+      },
+      {
+        id: "obj-lamp",
+        type: "prop",
+        name: "Vintage street lamp",
+        description: "glowing softly, warm bulb",
+        prompt: "vintage street lamp glowing softly in foreground",
+        assetId: "asset-3",
+        status: "ready",
+        locked: false
+      },
+      {
+        id: "obj-music",
+        type: "music",
+        name: "Cinematic Ambient",
+        description: "slow tempo, mysterious tone",
+        prompt: "cinematic ambient soundtrack, slow, mysterious, warm",
+        assetId: "asset-5",
+        status: "ready",
+        locked: false
+      },
+      {
+        id: "obj-narration",
+        type: "voice",
+        name: "Hero Narration",
+        description: "Aram voice narration intro",
+        prompt: '"In a quiet city, one question changed everything."',
+        assetId: "asset-6",
+        status: "ready",
+        locked: false
+      },
+      {
+        id: "obj-subtitles",
+        type: "subtitle",
+        name: "Lower-third subtitles",
+        description: "Clean cinematic subtitle",
+        status: "ready",
+        locked: false
+      },
+      {
+        id: "obj-sfx",
+        type: "sfx",
+        name: "Footsteps + wind",
+        description: "soft footsteps, distant wind",
+        status: "pending",
+        locked: false
+      }
+    ],
+    narration: {
+      text: "In a quiet city, one question changed everything.",
+      voiceRef: "hero"
+    },
+    audio: {
+      backgroundMusic: {
+        mode: "generate",
+        genre: "cinematic ambient",
+        tempo: "slow",
+        assetId: "asset-5"
+      },
+      soundEffects: ["soft footsteps", "distant wind"]
+    },
+    subtitles: { enabled: true, style: "clean cinematic lower third" },
+    transitionOut: { type: "fade", durationMs: 500 },
+    continuity: { usePreviousFinalFrame: false, exportFinalFrameForNextScene: true },
+    review: { status: "prepared", lockedAssets: ["asset-2"] },
+    costEstimate: 64,
+    thumbnailUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400"
+  },
+  {
+    id: "scene-002",
+    index: 1,
+    title: "A discovery in the alley",
+    objective: "Reveal the inciting object",
+    durationSec: 6,
+    generationMode: "prepare_then_generate",
+    background: { mode: "generate", description: "narrow alley at twilight, soft mist" },
+    camera: { shotType: "close-up", movement: "handheld", lens: "50mm" },
+    characters: [{ ref: "hero", emotion: "intrigued", action: "kneels and picks up a letter" }],
+    objects: [
+      {
+        id: "obj-bg-2",
+        type: "background",
+        name: "Foggy Alley",
+        description: "narrow alley, twilight, soft mist",
+        prompt: "narrow alley at twilight, soft mist, cinematic, 50mm",
+        status: "pending",
+        locked: false
+      },
+      {
+        id: "obj-hero-2",
+        type: "character",
+        name: "Aram (Hero)",
+        description: "kneels and picks up a letter",
+        status: "pending",
+        locked: false
+      },
+      {
+        id: "obj-letter",
+        type: "prop",
+        name: "Mysterious letter",
+        description: "aged envelope sealed with red wax",
+        status: "pending",
+        locked: false
+      }
+    ],
+    narration: { text: '"It was addressed to him, but written long before he was born."', voiceRef: "hero" },
+    audio: {
+      backgroundMusic: { mode: "generate", genre: "cinematic ambient", tempo: "slow" },
+      soundEffects: ["paper rustle", "distant footsteps"]
+    },
+    subtitles: { enabled: true, style: "clean cinematic lower third" },
+    transitionOut: { type: "dissolve", durationMs: 700 },
+    continuity: { usePreviousFinalFrame: true, exportFinalFrameForNextScene: true },
+    review: { status: "draft", lockedAssets: [] },
+    costEstimate: 48
+  },
+  {
+    id: "scene-003",
+    index: 2,
+    title: "The unknown caller",
+    objective: "Inject conflict via phone call",
+    durationSec: 7,
+    generationMode: "prepare_then_generate",
+    background: { mode: "generate", description: "dim apartment, blue moonlight" },
+    camera: { shotType: "wide shot", movement: "static", lens: "24mm" },
+    characters: [{ ref: "hero", emotion: "tense", action: "answers the phone" }],
+    objects: [],
+    narration: { text: '"Whoever you are, leave it where you found it."', voiceRef: "hero" },
+    audio: {
+      backgroundMusic: { mode: "generate", genre: "thriller score", tempo: "tense" },
+      soundEffects: ["phone vibration", "static hum"]
+    },
+    subtitles: { enabled: true, style: "clean cinematic lower third" },
+    transitionOut: { type: "cut", durationMs: 0 },
+    continuity: { usePreviousFinalFrame: true, exportFinalFrameForNextScene: false },
+    review: { status: "draft", lockedAssets: [] },
+    costEstimate: 56
+  }
+];
+var MOCK_PROJECTS = [
+  {
+    id: "video-001",
+    title: "A Cinematic Story",
+    goal: "cinematic_trailer",
+    description: "A mysterious letter sets a man on an unexpected journey through his own city.",
+    output: { aspectRatio: "16:9", resolution: "1080p", fps: 24, targetDurationSec: 60, language: "en" },
+    orchestration: {
+      mode: "scene_by_scene",
+      approvalPolicy: "approve_each_scene",
+      costPolicy: { estimateBeforeGenerate: true, maxCreditsPerScene: 100 },
+      versioning: { keepSceneVersions: true, keepPromptVersions: true }
+    },
+    models: {
+      script: { provider: "anthropic", model: "Claude Opus 4.7" },
+      image: { provider: "midjourney", model: "Midjourney v7" },
+      video: { provider: "google", model: "Veo 3" },
+      voice: { provider: "elevenlabs", model: "Eleven Multilingual v3" },
+      music: { provider: "suno", model: "Suno v5" }
+    },
+    creativeDirection: {
+      genre: "cinematic fantasy drama",
+      mood: ["warm", "mysterious", "emotional"],
+      styleReference: { source: "preset", value: "aivideo://styles/cinematic-warm" },
+      colorPalette: ["#0A3055", "#004F80", "#0097F6", "#F5A623", "#1A0E2E"],
+      fonts: { title: "Montserrat", subtitle: "Inter" },
+      negativeRules: ["no distorted hands", "no extra characters", "no text artifacts"],
+      realismLevel: 0.85
+    },
+    characters: MOCK_CHARACTERS,
+    scenes: MOCK_SCENES,
+    status: "in_progress",
+    createdAt: "2026-04-08T08:00:00Z",
+    updatedAt: "2026-05-02T17:42:00Z",
+    thumbnailUrl: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600"
+  },
+  {
+    id: "video-002",
+    title: "Aurora Nova \u2014 Music Video",
+    goal: "music_video",
+    description: "A neon-soaked synthwave music video featuring a lone driver across a future city.",
+    output: { aspectRatio: "16:9", resolution: "4k", fps: 30, targetDurationSec: 180, language: "en" },
+    orchestration: {
+      mode: "scene_by_scene",
+      approvalPolicy: "approve_each_scene",
+      costPolicy: { estimateBeforeGenerate: true, maxCreditsPerScene: 150 },
+      versioning: { keepSceneVersions: true, keepPromptVersions: true }
+    },
+    models: {
+      script: { provider: "openai", model: "GPT-5" },
+      image: { provider: "leonardo", model: "Phoenix" },
+      video: { provider: "runway", model: "Gen-4 Turbo" },
+      voice: { provider: "elevenlabs", model: "Eleven Multilingual v3" },
+      music: { provider: "udio", model: "Udio Pro" }
+    },
+    creativeDirection: {
+      genre: "synthwave music video",
+      mood: ["neon", "nostalgic", "fast-paced"],
+      styleReference: { source: "preset", value: "aivideo://styles/synthwave" },
+      colorPalette: ["#FF00C8", "#5C00FF", "#00E5FF", "#FFC700"],
+      fonts: { title: "Orbitron", subtitle: "Rajdhani" },
+      negativeRules: ["no daytime", "no realistic skin tones"],
+      realismLevel: 0.4
+    },
+    characters: [],
+    scenes: [],
+    status: "draft",
+    createdAt: "2026-05-01T12:00:00Z",
+    updatedAt: "2026-05-08T09:14:00Z",
+    thumbnailUrl: "https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=600"
+  },
+  {
+    id: "video-003",
+    title: "How Photosynthesis Works",
+    goal: "educational",
+    description: "A 90-second cinematic explainer on photosynthesis for kids aged 8-12.",
+    output: { aspectRatio: "16:9", resolution: "1080p", fps: 24, targetDurationSec: 90, language: "en" },
+    orchestration: {
+      mode: "hybrid",
+      approvalPolicy: "approve_each_scene",
+      costPolicy: { estimateBeforeGenerate: true, maxCreditsPerScene: 60 },
+      versioning: { keepSceneVersions: true, keepPromptVersions: true }
+    },
+    models: {
+      script: { provider: "anthropic", model: "Claude Opus 4.7" },
+      image: { provider: "stability", model: "Stable Diffusion 3.5" },
+      video: { provider: "luma", model: "Dream Machine" },
+      voice: { provider: "elevenlabs", model: "Eleven Multilingual v3" },
+      music: { provider: "suno", model: "Suno v5" }
+    },
+    creativeDirection: {
+      genre: "educational explainer",
+      mood: ["bright", "cheerful", "curious"],
+      styleReference: { source: "preset", value: "aivideo://styles/illustrated-pastel" },
+      colorPalette: ["#7CDA24", "#FFD93D", "#6BCB77", "#FF6B6B"],
+      fonts: { title: "Poppins", subtitle: "Quicksand" },
+      negativeRules: ["no scary imagery"],
+      realismLevel: 0.2
+    },
+    characters: [],
+    scenes: [],
+    status: "review",
+    createdAt: "2026-04-22T15:30:00Z",
+    updatedAt: "2026-05-06T08:05:00Z",
+    thumbnailUrl: "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600"
+  }
+];
+var MOCK_JOBS = [
+  {
+    id: "job-001",
+    projectId: "video-001",
+    sceneId: "scene-001",
+    objectId: "obj-bg",
+    provider: "midjourney",
+    model: "Midjourney v7",
+    status: "completed",
+    costEstimate: 0.4,
+    costActual: 0.4,
+    progress: 100,
+    startedAt: "2026-05-08T11:14:00Z",
+    completedAt: "2026-05-08T11:15:30Z",
+    outputAssetIds: ["asset-2"]
+  },
+  {
+    id: "job-002",
+    projectId: "video-001",
+    sceneId: "scene-001",
+    objectId: "obj-music",
+    provider: "suno",
+    model: "Suno v5",
+    status: "completed",
+    costEstimate: 1.5,
+    costActual: 1.5,
+    progress: 100,
+    startedAt: "2026-05-08T11:18:00Z",
+    completedAt: "2026-05-08T11:19:42Z",
+    outputAssetIds: ["asset-5"]
+  },
+  {
+    id: "job-003",
+    projectId: "video-001",
+    sceneId: "scene-002",
+    objectId: "obj-bg-2",
+    provider: "midjourney",
+    model: "Midjourney v7",
+    status: "running",
+    costEstimate: 0.4,
+    progress: 62,
+    startedAt: "2026-05-09T09:01:00Z",
+    outputAssetIds: []
+  }
+];
+var MOCK_VERSIONS = [
+  {
+    id: "v-001",
+    sceneId: "scene-001",
+    versionNumber: 1,
+    thumbnailUri: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=400",
+    userComment: "Initial preparation - too dark",
+    approvalStatus: "rejected",
+    cost: 12,
+    createdAt: "2026-05-07T18:21:00Z"
+  },
+  {
+    id: "v-002",
+    sceneId: "scene-001",
+    versionNumber: 2,
+    thumbnailUri: "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400",
+    userComment: "Increased warmth, dolly speed slower",
+    approvalStatus: "pending",
+    cost: 14,
+    createdAt: "2026-05-08T11:42:00Z"
+  }
+];
+
+export {
+  MOCK_AI_MODELS,
+  MOCK_ASSETS,
+  MOCK_PROJECTS,
+  MOCK_JOBS,
+  MOCK_VERSIONS
+};
+//# sourceMappingURL=chunk-5UP4TGNH.js.map

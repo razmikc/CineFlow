@@ -1,0 +1,60 @@
+:host { display: block; }
+h1 { font-size: 1.75rem; }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.85rem;
+  margin: 1.2rem 0 1rem;
+}
+@media (max-width: 700px) { .stats { grid-template-columns: 1fr; } }
+.stat { padding: 1.05rem; }
+.stat-num {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 0.3rem;
+}
+
+.jobs-table { padding: 0.5rem 0.85rem; }
+.table-head {
+  padding: 0.65rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-3);
+  font-weight: 700;
+  gap: 0.85rem;
+}
+.job-row {
+  padding: 0.85rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  gap: 0.85rem;
+  align-items: center;
+}
+.job-row:last-child { border-bottom: none; }
+
+.status-pill {
+  font-size: 0.85rem;
+}
+.status-pill.completed { color: var(--neon-green); }
+.status-pill.running { color: var(--neon-violet); animation: pulse 1.5s ease-in-out infinite; }
+.status-pill.queued { color: var(--text-mute); }
+.status-pill.failed { color: var(--neon-rose); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+.progress-bar {
+  height: 5px;
+  border-radius: 99px;
+  background: rgba(140, 160, 255, 0.1);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--grad-primary);
+  transition: width 0.4s ease;
+}
+.progress-fill.completed { background: var(--neon-green); }
+.progress-fill.failed { background: var(--neon-rose); }

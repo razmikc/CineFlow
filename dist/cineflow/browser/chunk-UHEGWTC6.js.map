@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/core/services/models.service.ts"],
+  "sourcesContent": ["import { Injectable, signal } from '@angular/core';\nimport { Observable, delay, of } from 'rxjs';\nimport { AiModel } from '../models/contract.model';\nimport { MOCK_AI_MODELS } from './mock-data';\n\n@Injectable({ providedIn: 'root' })\nexport class ModelsService {\n  private readonly _models = signal<AiModel[]>(structuredClone(MOCK_AI_MODELS));\n  readonly models = this._models.asReadonly();\n\n  list(): Observable<AiModel[]> {\n    return of(this._models()).pipe(delay(120));\n  }\n\n  byCapability(capability: AiModel['capability']): AiModel[] {\n    return this._models().filter((m) => m.capability === capability);\n  }\n}\n"],
+  "mappings": ";;;;;;;;;;;;;AAMM,IAAO,gBAAP,MAAO,eAAa;EACP,UAAU,OAAkB,gBAAgB,cAAc,GAAC,GAAA,YAAA,CAAA,EAAA,WAAA,UAAA,CAAA;;IAAA,CAAA;GAAA;EACnE,SAAS,KAAK,QAAQ,WAAU;EAEzC,OAAI;AACF,WAAO,GAAG,KAAK,QAAO,CAAE,EAAE,KAAK,MAAM,GAAG,CAAC;EAC3C;EAEA,aAAa,YAAiC;AAC5C,WAAO,KAAK,QAAO,EAAG,OAAO,CAAC,MAAM,EAAE,eAAe,UAAU;EACjE;;qCAVW,gBAAa;EAAA;4EAAb,gBAAa,SAAb,eAAa,WAAA,YADA,OAAM,CAAA;;;sEACnB,eAAa,CAAA;UADzB;WAAW,EAAE,YAAY,OAAM,CAAE;;;",
+  "names": []
+}
