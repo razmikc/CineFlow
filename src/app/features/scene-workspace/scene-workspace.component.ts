@@ -7,7 +7,19 @@ import { ScenesService } from '../../core/services/scenes.service';
 import { ProjectsService } from '../../core/services/projects.service';
 import { AssetsService } from '../../core/services/assets.service';
 import { JobsService } from '../../core/services/jobs.service';
-import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/models/contract.model';
+import {
+  Asset,
+  CreativeContract,
+  Scene,
+  SceneKeyframe,
+  SceneObject,
+  SceneVersion,
+} from '../../core/models/contract.model';
+
+type AssetPickerTarget =
+  | { kind: 'object'; objectId: string }
+  | { kind: 'startFrame' }
+  | { kind: 'endFrame' };
 
 @Component({
   selector: 'app-scene-workspace',
@@ -24,14 +36,32 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                 <span class="scene-num">Scene {{ s.index + 1 }}</span>
                 <input class="title-input" [ngModel]="s.title" (ngModelChange)="updateSceneField('title', $event)"/>
                 <span class="chip" [class]="statusTone(s.review.status)">{{ s.review.status }}</span>
+                @if (allScenesApproved()) {
+                  <span class="chip green">all scenes approved ✨</span>
+                }
               </div>
               <p class="muted" style="margin-top: 6px; font-size: 0.85rem">{{ s.objective }}</p>
             </div>
             <div class="row" style="flex-wrap: wrap; gap: 0.4rem">
-              <button class="btn ghost sm">⚡ Prepare scene</button>
-              <button class="btn primary sm" (click)="generateScene()">▶ Generate scene</button>
-              <button class="btn cool sm" (click)="approveScene()">✓ Approve</button>
-              <button class="btn sm" (click)="goNext()">Next scene →</button>
+              <button class="btn ghost sm" (click)="prepareScene()" [disabled]="isPreparing()">
+                @if (isPreparing()) { <span class="loader"></span> Preparing… }
+                @else { ⚡ Prepare scene }
+              </button>
+              <button class="btn primary sm" (click)="generateScene()" [disabled]="s.review.status === 'generating'">
+                ▶ Generate scene
+              </button>
+              <button class="btn cool sm" (click)="approveScene()"
+                [disabled]="s.review.status === 'approved'">
+                ✓ {{ s.review.status === 'approved' ? 'Approved' : 'Approve' }}
+              </button>
+              <button class="btn sm" (click)="goNext()"
+                [disabled]="!canGoNext()" [title]="canGoNext() ? '' : 'Approve this scene first'">
+                Next scene →
+              </button>
+              @if (allScenesApproved()) {
+                <a class="btn cool sm" [routerLink]="['/projects', p.id, 'final']">🎞 Final video</a>
+              }
+              <button class="btn danger sm" (click)="confirmDeleteScene()" title="Delete this scene">🗑 Delete scene</button>
             </div>
           </header>
 
@@ -41,6 +71,12 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                 [class.active]="sc.id === s.id" [class]="'tone-' + sceneStatusTone(sc.review.status)">
                 <span class="pill-num">{{ sc.index + 1 }}</span>
                 <span class="pill-text">{{ sc.title }}</span>
+              </a>
+            }
+            @if (allScenesApproved()) {
+              <a class="pill final" [routerLink]="['/projects', p.id, 'final']">
+                <span class="pill-num">★</span>
+                <span class="pill-text">Final video</span>
               </a>
             }
           </nav>
@@ -76,15 +112,59 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                 </div>
               </div>
 
+              <div class="keyframes-row">
+                @for (kf of keyframeSlots; track kf.which) {
+                  <div class="keyframe">
+                    <div class="kf-thumb" [style.background-image]="'url(' + keyframeThumb(s, kf.which) + ')'">
+                      <span class="kf-icon">{{ kf.icon }}</span>
+                      @if (keyframeFor(s, kf.which); as data) {
+                        @if (data.locked) { <span class="kf-lock">🔒</span> }
+                      }
+                    </div>
+                    <div class="kf-body">
+                      <strong style="font-size: 0.82rem">{{ kf.label }}</strong>
+                      <input class="kf-desc" [ngModel]="keyframeFor(s, kf.which)?.description ?? ''"
+                        (ngModelChange)="updateKeyframe(kf.which, { description: $event })"
+                        placeholder="describe this keyframe…"/>
+                      <div class="row" style="gap: 0.3rem; margin-top: 0.3rem; flex-wrap: wrap">
+                        <button class="btn ghost sm" (click)="generateKeyframe(kf.which)">✨ Generate</button>
+                        <button class="btn sm" (click)="openAssetPicker({ kind: kf.which })">📁 Replace</button>
+                        <button class="btn sm" (click)="updateKeyframe(kf.which, { locked: !keyframeFor(s, kf.which)?.locked })">
+                          {{ keyframeFor(s, kf.which)?.locked ? '🔓 Unlock' : '🔒 Lock' }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
               <div class="prompt-panel">
                 <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
-                  <div class="section-title" style="margin: 0">Compiled scene prompt</div>
+                  <div class="section-title" style="margin: 0">
+                    Compiled scene prompt
+                    @if (s.promptOverride) { <span class="chip amber sm-chip">edited</span> }
+                  </div>
                   <div class="row" style="gap: 0.3rem">
-                    <button class="btn sm">Edit raw</button>
-                    <button class="btn primary sm">↻ Regenerate prompt</button>
+                    @if (!editingPrompt()) {
+                      <button class="btn sm" (click)="startEditPrompt()">✏️ Edit raw</button>
+                      <button class="btn primary sm" (click)="regeneratePrompt()">↻ Regenerate prompt</button>
+                    } @else {
+                      <button class="btn sm" (click)="cancelEditPrompt()">Cancel</button>
+                      <button class="btn primary sm" (click)="saveEditPrompt()">Save</button>
+                    }
                   </div>
                 </div>
-                <div class="prompt-text mono">{{ compiledPrompt() }}</div>
+                @if (!editingPrompt()) {
+                  <div class="prompt-text mono">{{ effectivePrompt() }}</div>
+                } @else {
+                  <textarea class="prompt-edit mono" rows="12"
+                    [ngModel]="promptDraft()" (ngModelChange)="promptDraft.set($event)"></textarea>
+                  @if (s.promptOverride) {
+                    <button class="btn ghost sm" (click)="resetPromptToCompiled()" style="margin-top: 0.4rem">
+                      Reset to compiled
+                    </button>
+                  }
+                }
               </div>
             </section>
 
@@ -97,7 +177,11 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                 @for (o of s.objects; track o.id) {
                   <button class="object-row" [class.selected]="selectedObjectId() === o.id"
                     (click)="selectObject(o.id)">
-                    <span class="object-icon" [innerHTML]="iconFor(o.type)"></span>
+                    @if (assetForObject(o); as a) {
+                      <span class="object-thumb" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'"></span>
+                    } @else {
+                      <span class="object-icon" [innerHTML]="iconFor(o.type)"></span>
+                    }
                     <div style="flex: 1; min-width: 0; text-align: left">
                       <div class="row" style="gap: 0.4rem">
                         <strong style="font-size: 0.86rem">{{ o.name }}</strong>
@@ -108,6 +192,11 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                     <span class="status-chip" [class]="o.status">●</span>
                   </button>
                 }
+                @if (s.objects.length === 0) {
+                  <div class="empty-objects">
+                    <p class="muted" style="font-size: 0.82rem">No objects yet. Add a character, prop, or sound.</p>
+                  </div>
+                }
               </div>
             </aside>
 
@@ -117,7 +206,19 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                   <div class="section-title" style="margin: 0">Inspector</div>
                   <span class="chip muted">{{ obj.type }}</span>
                 </div>
-                <label class="field">Name</label>
+                <label class="field">Type</label>
+                <select [ngModel]="obj.type" (ngModelChange)="updateObject(obj.id, { type: $event })">
+                  <option value="character">character</option>
+                  <option value="prop">prop</option>
+                  <option value="background">background</option>
+                  <option value="effect">effect</option>
+                  <option value="subtitle">subtitle</option>
+                  <option value="music">music</option>
+                  <option value="sfx">sfx</option>
+                  <option value="voice">voice</option>
+                </select>
+
+                <label class="field" style="margin-top: 0.7rem">Name</label>
                 <input [ngModel]="obj.name" (ngModelChange)="updateObject(obj.id, { name: $event })"/>
 
                 <label class="field" style="margin-top: 0.7rem">Description</label>
@@ -133,6 +234,7 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                       <div style="font-size: 0.85rem; font-weight: 600">{{ a.name }}</div>
                       <div class="muted" style="font-size: 0.74rem">{{ a.provider }} · {{ a.model }}</div>
                     </div>
+                    <button class="iconbtn sm" (click)="updateObject(obj.id, { assetId: undefined })" title="Detach asset">×</button>
                   </div>
                 }
 
@@ -140,17 +242,17 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
                   <button class="action" (click)="regenerate(obj)">
                     <span class="action-icon">↻</span><span>Regenerate</span>
                   </button>
-                  <button class="action">
+                  <button class="action" (click)="askAiToImprove(obj)">
                     <span class="action-icon">🪄</span><span>Ask AI to improve</span>
                   </button>
-                  <button class="action">
+                  <button class="action" (click)="openAssetPicker({ kind: 'object', objectId: obj.id })">
                     <span class="action-icon">📁</span><span>Replace from assets</span>
                   </button>
                   <button class="action" (click)="toggleLock(obj)">
                     <span class="action-icon">{{ obj.locked ? '🔓' : '🔒' }}</span>
                     <span>{{ obj.locked ? 'Unlock' : 'Lock' }}</span>
                   </button>
-                  <button class="action">
+                  <button class="action" (click)="duplicateObject(obj)">
                     <span class="action-icon">📋</span><span>Duplicate</span>
                   </button>
                   <button class="action danger" (click)="removeObject(obj.id)">
@@ -202,7 +304,7 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
           <section class="versions card">
             <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
               <div class="section-title" style="margin: 0">Version history</div>
-              <button class="btn ghost sm">Compare</button>
+              <button class="btn ghost sm" (click)="openCompare()" [disabled]="versions().length < 2">Compare</button>
             </div>
             <div class="versions-grid">
               @for (v of versions(); track v.id) {
@@ -259,6 +361,79 @@ import { CreativeContract, Scene, SceneObject, SceneVersion } from '../../core/m
             </div>
           </section>
         </div>
+
+        @if (assetPickerTarget(); as target) {
+          <div class="modal-backdrop" (click)="closeAssetPicker()">
+            <div class="modal" (click)="$event.stopPropagation()">
+              <div class="row" style="justify-content: space-between; margin-bottom: 0.6rem">
+                <strong style="font-family: var(--font-display); font-size: 1.05rem">Pick asset</strong>
+                <button class="iconbtn" (click)="closeAssetPicker()">×</button>
+              </div>
+              <div class="picker-grid">
+                @for (a of pickerAssets(); track a.id) {
+                  <button class="picker-item" (click)="applyPickedAsset(a)">
+                    <div class="picker-thumb" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'"></div>
+                    <div class="picker-name">{{ a.name }}</div>
+                    <div class="muted" style="font-size: 0.7rem">{{ a.type }}</div>
+                  </button>
+                }
+                @if (pickerAssets().length === 0) {
+                  <div class="empty-version">No assets in library — generate one from the Asset library page.</div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (compareOpen()) {
+          <div class="modal-backdrop" (click)="compareOpen.set(false)">
+            <div class="modal wide" (click)="$event.stopPropagation()">
+              <div class="row" style="justify-content: space-between; margin-bottom: 0.6rem">
+                <strong style="font-family: var(--font-display); font-size: 1.05rem">Compare versions</strong>
+                <button class="iconbtn" (click)="compareOpen.set(false)">×</button>
+              </div>
+              <div class="row" style="gap: 0.5rem; margin-bottom: 0.6rem">
+                <select [ngModel]="compareLeftId()" (ngModelChange)="compareLeftId.set($event)">
+                  @for (v of versions(); track v.id) {
+                    <option [ngValue]="v.id">v{{ v.versionNumber }} · {{ v.userComment }}</option>
+                  }
+                </select>
+                <span class="muted">vs</span>
+                <select [ngModel]="compareRightId()" (ngModelChange)="compareRightId.set($event)">
+                  @for (v of versions(); track v.id) {
+                    <option [ngValue]="v.id">v{{ v.versionNumber }} · {{ v.userComment }}</option>
+                  }
+                </select>
+              </div>
+              <div class="compare-grid">
+                @for (side of compareSides(); track side.id) {
+                  <div class="compare-side">
+                    <div class="compare-thumb" [style.background-image]="'url(' + side.thumbnailUri + ')'"></div>
+                    <strong>v{{ side.versionNumber }}</strong>
+                    <span class="chip" [class]="versionTone(side.approvalStatus)">{{ side.approvalStatus }}</span>
+                    <p class="muted" style="font-size: 0.82rem">{{ side.userComment }}</p>
+                    <span class="mono" style="font-size: 0.78rem">{{ side.cost }} credits</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (confirmDelete()) {
+          <div class="modal-backdrop" (click)="confirmDelete.set(false)">
+            <div class="modal" (click)="$event.stopPropagation()">
+              <strong style="font-family: var(--font-display); font-size: 1.05rem">Delete scene?</strong>
+              <p class="muted" style="margin-top: 0.4rem">
+                This will remove "{{ s.title }}" and all of its objects. This cannot be undone.
+              </p>
+              <div class="row" style="gap: 0.5rem; justify-content: flex-end; margin-top: 1rem">
+                <button class="btn" (click)="confirmDelete.set(false)">Cancel</button>
+                <button class="btn danger" (click)="deleteScene()">Delete scene</button>
+              </div>
+            </div>
+          </div>
+        }
       }
     } @else {
       <div class="loading">
@@ -281,6 +456,19 @@ export class SceneWorkspaceComponent {
   protected readonly scene = signal<Scene | undefined>(undefined);
   protected readonly versions = signal<SceneVersion[]>([]);
   protected readonly selectedObjectId = signal<string | null>(null);
+  protected readonly editingPrompt = signal(false);
+  protected readonly promptDraft = signal('');
+  protected readonly assetPickerTarget = signal<AssetPickerTarget | null>(null);
+  protected readonly compareOpen = signal(false);
+  protected readonly compareLeftId = signal<string | null>(null);
+  protected readonly compareRightId = signal<string | null>(null);
+  protected readonly confirmDelete = signal(false);
+  protected readonly isPreparing = signal(false);
+
+  protected readonly keyframeSlots: { which: 'startFrame' | 'endFrame'; label: string; icon: string }[] = [
+    { which: 'startFrame', label: 'Start frame', icon: '◧' },
+    { which: 'endFrame', label: 'End frame', icon: '◨' },
+  ];
 
   protected readonly selectedObject = computed(() => {
     const id = this.selectedObjectId();
@@ -290,6 +478,8 @@ export class SceneWorkspaceComponent {
   protected readonly previewImage = computed(() => {
     const s = this.scene();
     if (!s) return '';
+    const startAsset = s.startFrame?.assetId ? this.assets.get(s.startFrame.assetId) : undefined;
+    if (startAsset) return startAsset.thumbnail || startAsset.uri;
     if (s.thumbnailUrl) return s.thumbnailUrl;
     if (s.background.assetId) {
       const a = this.assets.get(s.background.assetId);
@@ -318,19 +508,68 @@ export class SceneWorkspaceComponent {
       `Genre: ${p.creativeDirection.genre}; Mood: ${p.creativeDirection.mood.join(', ')}`,
       `Camera: ${s.camera.shotType}, ${s.camera.movement}, ${s.camera.lens}`,
       `Background: ${s.background.description}`,
+      s.startFrame?.description ? `Start frame: ${s.startFrame.description}` : '',
+      s.endFrame?.description ? `End frame: ${s.endFrame.description}` : '',
       ...s.characters.map((c) => `Character ${c.ref}: ${c.emotion} — ${c.action}`),
       ...s.objects.filter((o) => o.prompt).map((o) => `${o.type}/${o.name}: ${o.prompt}`),
       `Audio: ${s.audio.backgroundMusic.genre}, tempo ${s.audio.backgroundMusic.tempo}; SFX: ${s.audio.soundEffects.join(', ')}`,
       `Subtitles: ${s.subtitles.enabled ? s.subtitles.style : 'off'}`,
       `Negative: ${p.creativeDirection.negativeRules.join('; ')}`,
       `Duration: ${s.durationSec}s @ ${p.output.fps}fps, ${p.output.aspectRatio}`,
-    ].join('\n');
+    ].filter(Boolean).join('\n');
+  });
+
+  protected readonly effectivePrompt = computed(() => {
+    const s = this.scene();
+    return s?.promptOverride ?? this.compiledPrompt();
   });
 
   protected readonly activeJobs = computed(() => {
     const s = this.scene();
     if (!s) return [];
     return this.jobs.jobs().filter((j) => j.sceneId === s.id);
+  });
+
+  protected readonly allScenesApproved = computed(() => {
+    const p = this.project();
+    return !!p && p.scenes.length > 0 && p.scenes.every((sc) => sc.review.status === 'approved');
+  });
+
+  protected readonly canGoNext = computed(() => {
+    const p = this.project();
+    const s = this.scene();
+    if (!p || !s) return false;
+    const hasNext = !!p.scenes.find((x) => x.index === s.index + 1);
+    return hasNext && s.review.status === 'approved';
+  });
+
+  protected readonly pickerAssets = computed(() => {
+    const target = this.assetPickerTarget();
+    if (!target) return [];
+    if (target.kind === 'startFrame' || target.kind === 'endFrame') {
+      return this.assets.assets().filter((a) => a.type === 'image');
+    }
+    const obj = this.scene()?.objects.find((o) => o.id === target.objectId);
+    if (!obj) return this.assets.assets();
+    const allowedByType: Record<string, Asset['type'][]> = {
+      character: ['image'],
+      prop: ['image'],
+      background: ['image'],
+      effect: ['image', 'video'],
+      subtitle: ['font'],
+      music: ['music', 'audio'],
+      sfx: ['audio'],
+      voice: ['voice', 'audio'],
+    };
+    const allowed = allowedByType[obj.type];
+    return allowed ? this.assets.assets().filter((a) => allowed.includes(a.type)) : this.assets.assets();
+  });
+
+  protected readonly compareSides = computed(() => {
+    const list = this.versions();
+    const left = list.find((v) => v.id === this.compareLeftId());
+    const right = list.find((v) => v.id === this.compareRightId());
+    return [left, right].filter((v): v is SceneVersion => !!v);
   });
 
   constructor() {
@@ -343,7 +582,16 @@ export class SceneWorkspaceComponent {
         this.scene.set(s);
         if (s && s.objects.length > 0) this.selectedObjectId.set(s.objects[0].id);
       });
-      this.scenesService.versions(sceneId).subscribe((v) => this.versions.set(v));
+      this.scenesService.versions(sceneId).subscribe((v) => {
+        this.versions.set(v);
+        if (v.length >= 2) {
+          this.compareLeftId.set(v[0].id);
+          this.compareRightId.set(v[1].id);
+        } else if (v.length === 1) {
+          this.compareLeftId.set(v[0].id);
+          this.compareRightId.set(v[0].id);
+        }
+      });
     });
   }
 
@@ -374,7 +622,20 @@ export class SceneWorkspaceComponent {
       { label: 'Audio sync', value: s.audio.backgroundMusic.genre ? 'Ready' : 'Skipped', tone: 'green' },
       { label: 'Safety / IP', value: 'No flags', tone: 'green' },
       { label: 'Duration', value: `${s.durationSec}s`, tone: 'green' },
+      { label: 'Start frame', value: s.startFrame?.assetId ? 'Ready' : 'Missing', tone: s.startFrame?.assetId ? 'green' : 'amber' },
     ];
+  }
+
+  protected keyframeFor(s: Scene, which: 'startFrame' | 'endFrame'): SceneKeyframe | undefined {
+    return s[which];
+  }
+  protected keyframeThumb(s: Scene, which: 'startFrame' | 'endFrame'): string {
+    const kf = this.keyframeFor(s, which);
+    if (kf?.assetId) {
+      const a = this.assets.get(kf.assetId);
+      if (a) return a.thumbnail || a.uri;
+    }
+    return '';
   }
 
   protected selectObject(id: string) { this.selectedObjectId.set(id); }
@@ -398,6 +659,18 @@ export class SceneWorkspaceComponent {
     this.scene.set(updatedScene);
     this.scenesService.removeObject(p.id, s.id, id).subscribe();
     this.selectedObjectId.set(updatedScene.objects[0]?.id ?? null);
+  }
+  protected duplicateObject(o: SceneObject) {
+    const p = this.project();
+    const s = this.scene();
+    if (!p || !s) return;
+    this.scenesService.duplicateObject(p.id, s.id, o.id).subscribe((updated) => {
+      if (updated) {
+        this.scene.set(updated);
+        const newObj = updated.objects.find((x) => x.name === `${o.name} (copy)`);
+        if (newObj) this.selectedObjectId.set(newObj.id);
+      }
+    });
   }
   protected addObject() {
     const p = this.project();
@@ -430,7 +703,27 @@ export class SceneWorkspaceComponent {
       costEstimate: 0.4,
       outputAssetIds: [],
     }).subscribe();
-    setTimeout(() => this.updateObject(o.id, { status: 'ready' }), 5000);
+    const prompt = o.prompt || `${o.type} ${o.name}, cinematic`;
+    this.assets.generate({
+      type: o.type === 'music' ? 'music' : o.type === 'sfx' ? 'audio' : o.type === 'voice' ? 'voice' : 'image',
+      name: `${o.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}.png`,
+      prompt,
+      provider: p.models.image.provider,
+      model: p.models.image.model,
+    }).subscribe((asset) => {
+      this.updateObject(o.id, { status: 'ready', assetId: asset.id });
+    });
+  }
+  protected askAiToImprove(o: SceneObject) {
+    const p = this.project();
+    if (!p || !o.prompt) {
+      this.updateObject(o.id, {
+        prompt: `${o.name}, cinematic ${p?.creativeDirection.genre ?? ''} style, ${p?.creativeDirection.mood.join(', ') ?? 'atmospheric'}, detailed`,
+      });
+      return;
+    }
+    const improved = `${o.prompt.replace(/\.+\s*$/, '')}, ${p.creativeDirection.mood.slice(0, 2).join(' and ') || 'atmospheric'}, sharp focus, ${p.creativeDirection.genre || 'cinematic'} mood, 35mm`;
+    this.updateObject(o.id, { prompt: improved });
   }
   protected updateSceneField<K extends keyof Scene>(key: K, value: Scene[K]) {
     const p = this.project();
@@ -444,6 +737,45 @@ export class SceneWorkspaceComponent {
     const s = this.scene();
     if (!s) return;
     this.updateSceneField('continuity', { ...s.continuity, [key]: value });
+  }
+  protected updateKeyframe(which: 'startFrame' | 'endFrame', patch: Partial<SceneKeyframe>) {
+    const s = this.scene();
+    if (!s) return;
+    const current: SceneKeyframe = s[which] ?? { mode: 'generate', description: '' };
+    this.updateSceneField(which, { ...current, ...patch });
+  }
+  protected generateKeyframe(which: 'startFrame' | 'endFrame') {
+    const p = this.project();
+    const s = this.scene();
+    if (!p || !s) return;
+    const kf = s[which] ?? { mode: 'generate', description: '' };
+    const description = kf.description || (which === 'startFrame' ? `Opening shot of "${s.title}"` : `Closing shot of "${s.title}"`);
+    this.assets.generate({
+      type: 'image',
+      name: `${s.id}-${which}-${Date.now()}.png`,
+      prompt: `${description}, ${p.creativeDirection.genre}, ${p.creativeDirection.mood.join(', ')}`,
+      provider: p.models.image.provider,
+      model: p.models.image.model,
+    }).subscribe((asset) => {
+      this.updateKeyframe(which, { assetId: asset.id, description });
+    });
+  }
+  protected prepareScene() {
+    const p = this.project();
+    const s = this.scene();
+    if (!p || !s) return;
+    this.isPreparing.set(true);
+    this.updateSceneField('review', { ...s.review, status: 'prepared' });
+    this.jobs.enqueue({
+      projectId: p.id,
+      sceneId: s.id,
+      provider: p.models.image.provider,
+      model: p.models.image.model,
+      costEstimate: 2,
+      outputAssetIds: [],
+    }).subscribe();
+    if (!s.startFrame?.assetId) this.generateKeyframe('startFrame');
+    setTimeout(() => this.isPreparing.set(false), 1500);
   }
   protected generateScene() {
     const p = this.project();
@@ -469,6 +801,7 @@ export class SceneWorkspaceComponent {
     if (!p || !s) return;
     this.scenesService.approve(p.id, s.id).subscribe((approved) => {
       if (approved) this.scene.set(approved);
+      this.projectsService.get(p.id).subscribe((np) => np && this.project.set(np));
     });
   }
   protected goNext() {
@@ -477,6 +810,66 @@ export class SceneWorkspaceComponent {
     if (!p || !s) return;
     const next = p.scenes.find((x) => x.index === s.index + 1);
     if (next) this.router.navigate(['/projects', p.id, 'scenes', next.id]);
+  }
+
+  protected startEditPrompt() {
+    this.promptDraft.set(this.effectivePrompt());
+    this.editingPrompt.set(true);
+  }
+  protected cancelEditPrompt() {
+    this.editingPrompt.set(false);
+    this.promptDraft.set('');
+  }
+  protected saveEditPrompt() {
+    this.updateSceneField('promptOverride', this.promptDraft());
+    this.editingPrompt.set(false);
+  }
+  protected resetPromptToCompiled() {
+    this.updateSceneField('promptOverride', undefined);
+    this.promptDraft.set(this.compiledPrompt());
+  }
+  protected regeneratePrompt() {
+    this.updateSceneField('promptOverride', undefined);
+  }
+
+  protected openAssetPicker(target: AssetPickerTarget) {
+    this.assetPickerTarget.set(target);
+  }
+  protected closeAssetPicker() {
+    this.assetPickerTarget.set(null);
+  }
+  protected applyPickedAsset(a: Asset) {
+    const target = this.assetPickerTarget();
+    if (!target) return;
+    if (target.kind === 'object') {
+      this.updateObject(target.objectId, { assetId: a.id, status: 'ready' });
+    } else {
+      this.updateKeyframe(target.kind, { assetId: a.id, description: a.prompt || a.name });
+    }
+    this.closeAssetPicker();
+  }
+
+  protected openCompare() {
+    if (this.versions().length < 2) return;
+    this.compareOpen.set(true);
+  }
+
+  protected confirmDeleteScene() {
+    this.confirmDelete.set(true);
+  }
+  protected deleteScene() {
+    const p = this.project();
+    const s = this.scene();
+    if (!p || !s) return;
+    this.scenesService.remove(p.id, s.id).subscribe((scenes) => {
+      this.confirmDelete.set(false);
+      if (scenes.length === 0) {
+        this.router.navigate(['/projects', p.id]);
+      } else {
+        const target = scenes[Math.min(s.index, scenes.length - 1)];
+        this.router.navigate(['/projects', p.id, 'scenes', target.id]);
+      }
+    });
   }
 
   protected assetForObject(o: SceneObject) {

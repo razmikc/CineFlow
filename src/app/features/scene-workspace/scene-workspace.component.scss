@@ -355,3 +355,194 @@
   height: 60vh;
   color: var(--text-2);
 }
+
+.pill.final {
+  background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(52, 211, 153, 0.16));
+  border-color: rgba(34, 211, 238, 0.4);
+  color: var(--text-1);
+}
+.pill.final .pill-num { background: var(--grad-cool); color: white; }
+
+.btn.danger {
+  border-color: rgba(251, 113, 133, 0.4);
+  color: var(--neon-rose);
+}
+.btn.danger:hover {
+  background: rgba(251, 113, 133, 0.1);
+  color: var(--neon-rose);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.keyframes-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+@media (max-width: 700px) { .keyframes-row { grid-template-columns: 1fr; } }
+.keyframe {
+  display: flex;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(10, 12, 31, 0.4);
+}
+.kf-thumb {
+  position: relative;
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(140, 160, 255, 0.12);
+  border: 1px dashed var(--border);
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 4px;
+}
+.kf-icon {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  background: rgba(0,0,0,0.55);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: white;
+}
+.kf-lock {
+  background: rgba(0,0,0,0.55);
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+}
+.kf-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.kf-desc {
+  width: 100%;
+  font-size: 0.8rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.prompt-edit {
+  width: 100%;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.55;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border-strong);
+  color: var(--text-1);
+  padding: 0.6rem;
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.object-thumb {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(140, 160, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.empty-objects {
+  text-align: center;
+  padding: 1rem 0.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 5, 18, 0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.2rem;
+}
+.modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 1.1rem;
+  width: 100%;
+  max-width: 540px;
+  max-height: 86vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-soft);
+}
+.modal.wide { max-width: 880px; }
+
+.picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 0.6rem;
+}
+.picker-item {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  transition: border-color 0.15s;
+}
+.picker-item:hover { border-color: var(--neon-violet); }
+.picker-thumb {
+  aspect-ratio: 16/9;
+  border-radius: 6px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(140, 160, 255, 0.1);
+}
+.picker-name {
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+.compare-side {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+}
+.compare-thumb {
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+  background-size: cover;
+  background-position: center;
+  background-color: rgba(140, 160, 255, 0.1);
+}
+@media (max-width: 700px) { .compare-grid { grid-template-columns: 1fr; } }

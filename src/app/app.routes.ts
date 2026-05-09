@@ -29,6 +29,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'projects/:id/final',
+        loadComponent: () =>
+          import('./features/final-video/final-video.component').then(
+            (m) => m.FinalVideoComponent,
+          ),
+      },
+      {
         path: 'assets',
         loadComponent: () =>
           import('./features/asset-library/asset-library.component').then(
