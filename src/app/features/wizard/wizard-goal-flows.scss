@@ -1,0 +1,166 @@
+/* ============== YouTube Short — Trending audio ============== */
+.audio-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+.audio-card {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  border: 1px solid var(--border);
+  background: rgba(10, 13, 35, 0.4);
+  border-radius: var(--r-md);
+  padding: 0.55rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.audio-card:hover { border-color: rgba(139, 92, 246, 0.45); }
+.audio-card.selected { border-color: var(--neon-cyan); box-shadow: 0 0 0 1px var(--neon-cyan) inset; }
+.audio-art {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(34, 211, 238, 0.3));
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.audio-wave {
+  position: absolute;
+  inset: 30% 6%;
+  background: repeating-linear-gradient(90deg, transparent 0 2px, rgba(255,255,255,0.6) 2px 3px);
+  mask-image: radial-gradient(circle at center, rgba(0,0,0,1), rgba(0,0,0,0) 70%);
+}
+.audio-bpm {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.85);
+  background: rgba(0,0,0,0.45);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.audio-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.audio-summary { padding: 0.85rem 1rem; }
+
+/* ============== YouTube Short — Vertical style preview ============== */
+.yt-style-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 720px) { .yt-style-grid { grid-template-columns: 1fr; } }
+.phone-preview {
+  width: 200px;
+  aspect-ratio: 9/16;
+  border-radius: 22px;
+  border: 1px solid var(--border-strong);
+  background-color: rgba(140, 160, 255, 0.08);
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.phone-frame { position: absolute; inset: 0; }
+.safe-zone {
+  position: absolute;
+  inset: 12% 8%;
+  border: 1px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 12px;
+  pointer-events: none;
+}
+.caption-strip {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 22%;
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.7);
+  line-height: 1.15;
+  font-size: 0.86rem;
+}
+.caption-bold { letter-spacing: -0.01em; }
+.caption-karaoke { background: linear-gradient(90deg, currentColor 50%, rgba(255,255,255,0.3) 50%); -webkit-background-clip: text; background-clip: text; }
+.caption-animated {
+  animation: shimmer 2.4s linear infinite;
+  background: linear-gradient(90deg, currentColor 30%, rgba(255,255,255,0.6) 50%, currentColor 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.caption-minimal { font-weight: 500; opacity: 0.92; }
+
+/* ============== YouTube Short — Beats ============== */
+.beat-list { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.beat-row {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(10, 13, 35, 0.4);
+}
+.beat-row.hook-beat { border-color: rgba(236, 72, 153, 0.5); box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.3) inset; }
+.beat-row.payoff-beat { border-color: rgba(52, 211, 153, 0.5); box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.3) inset; }
+.beat-tag { display: flex; align-items: center; gap: 0.3rem; }
+.beat-tag select { padding: 0.25rem 0.4rem; font-size: 0.78rem; }
+
+/* ============== Ad — Beat skeleton ============== */
+.ad-beats { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.ad-beat {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  background: rgba(10, 13, 35, 0.4);
+}
+.ad-beat[data-type='hook']     { border-left: 4px solid var(--neon-magenta); }
+.ad-beat[data-type='problem']  { border-left: 4px solid var(--neon-amber); }
+.ad-beat[data-type='solution'] { border-left: 4px solid var(--neon-violet); }
+.ad-beat[data-type='proof']    { border-left: 4px solid var(--neon-cyan); }
+.ad-beat[data-type='cta']      { border-left: 4px solid var(--neon-green); }
+.ad-beat-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; flex-wrap: wrap; }
+
+/* ============== Ad — Variants ============== */
+.variants-grid {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.7rem;
+}
+.variant-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  background: rgba(10, 13, 35, 0.4);
+  display: flex;
+  flex-direction: column;
+}
+.variant-card[data-axis='hook']   { border-color: rgba(236, 72, 153, 0.45); }
+.variant-card[data-axis='cta']    { border-color: rgba(52, 211, 153, 0.45); }
+.variant-card[data-axis='visual'] { border-color: rgba(34, 211, 238, 0.45); }
+.variant-label-input {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.96rem;
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: var(--text-1);
+  width: 65%;
+}
+.variant-label-input:focus { box-shadow: none; }

@@ -128,6 +128,7 @@ export class ShellComponent {
     {
       title: 'Library',
       items: [
+        { label: 'Characters', path: '/characters', icon: this.icon('user') },
         { label: 'Asset library', path: '/assets', icon: this.icon('image') },
         { label: 'AI models', path: '/models', icon: this.icon('chip'), badge: '13' },
         { label: 'Jobs', path: '/jobs', icon: this.icon('jobs') },
@@ -146,6 +147,7 @@ export class ShellComponent {
       image: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="3" width="15" height="14" rx="2.5"/><circle cx="7.5" cy="8" r="1.5"/><path d="m3 14 4-4 4 4 3-3 3 3"/></svg>`,
       chip: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="5" width="10" height="10" rx="1.5"/><path d="M8 5V3M12 5V3M8 17v-2M12 17v-2M5 8H3M5 12H3M17 8h-2M17 12h-2"/></svg>`,
       jobs: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3.5 6.5h13M3.5 10h13M3.5 13.5h8" stroke-linecap="round"/><circle cx="14.5" cy="13.5" r="2.5"/></svg>`,
+      user: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c.8-3.4 3.5-5 6.5-5s5.7 1.6 6.5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     };
     return map[kind] ?? '';
   }
