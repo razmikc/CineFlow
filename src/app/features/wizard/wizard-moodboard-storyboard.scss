@@ -235,3 +235,38 @@
 }
 
 /* YT/Ad goal-specific styles live in ./wizard-goal-flows.scss */
+
+/* Character editor: keep editor pane fully visible when the contract preview is open. */
+.wiz-body.with-preview .char-layout {
+  grid-template-columns: 1fr;
+}
+.wiz-body.with-preview .char-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.4rem;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 0;
+}
+.wiz-body.with-preview .empty-state.char-empty {
+  grid-column: 1 / -1;
+}
+
+/* Wider viewport fallback — collapse char layout earlier than 1100px when needed. */
+@media (max-width: 1400px) {
+  .wiz-body.with-preview .char-layout { grid-template-columns: 1fr; }
+}
+
+/* Allow the editor to grow without being clipped by .card { overflow: hidden }. */
+.char-editor {
+  min-width: 0;
+  overflow: visible;
+}
+.char-editor .grid-2,
+.char-editor .grid-3 {
+  min-width: 0;
+}
+.char-editor .ref-grid,
+.char-editor .picker-grid {
+  min-width: 0;
+}

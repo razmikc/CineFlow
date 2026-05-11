@@ -560,16 +560,6 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
 
                 <div class="char-layout">
                   <aside class="char-list">
-                    @if (p.characters.length === 0) {
-                      <div class="empty-state" style="padding: 1.4rem; text-align: center">
-                        <div class="empty-art" style="font-size: 1.8rem">👤</div>
-                        <p class="muted" style="font-size: 0.85rem">No characters yet</p>
-                        <div class="row" style="gap: 0.4rem; justify-content: center; margin-top: 0.4rem; flex-wrap: wrap">
-                          <button class="btn sm" (click)="openLibraryPicker()" type="button">Import from library</button>
-                          <button class="btn primary sm" (click)="addAndEditCharacter()">+ Add first character</button>
-                        </div>
-                      </div>
-                    }
                     @for (c of p.characters; track c.id) {
                       <button class="char-row" [class.active]="selectedCharId() === c.id" (click)="selectedCharId.set(c.id)">
                         <div class="char-row-thumb" [style.background-image]="thumbForChar(c)"></div>
@@ -729,11 +719,13 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                       <div class="empty-editor">
                         <div style="font-size: 2.4rem">👤</div>
                         <h3 style="margin-top: 0.5rem">No character selected</h3>
-                        <p class="muted" style="max-width: 280px">Pick a character from the list, import one from your library, or add a new one to start building your cast.</p>
-                        <div class="row" style="gap: 0.4rem; margin-top: 0.8rem; flex-wrap: wrap; justify-content: center">
-                          <button class="btn" (click)="openLibraryPicker()" type="button">Import from library</button>
-                          <button class="btn primary" (click)="addAndEditCharacter()">+ Add character</button>
-                        </div>
+                        <p class="muted" style="max-width: 280px">
+                          @if (p.characters.length === 0) {
+                            Use the buttons above to add your first character or import one from your library.
+                          } @else {
+                            Pick a character from the list on the left to edit their look, voice, and references.
+                          }
+                        </p>
                       </div>
                     }
                   </section>
