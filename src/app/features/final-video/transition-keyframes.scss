@@ -1,0 +1,55 @@
+@keyframes tx-cut { 0%, 99% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes tx-fade-out-black { 0% { opacity: 1; filter: brightness(1); } 100% { opacity: 0; filter: brightness(0); } }
+@keyframes tx-fade-in-black { 0% { opacity: 0; filter: brightness(0); } 100% { opacity: 1; filter: brightness(1); } }
+@keyframes tx-fade-out-white { 0% { opacity: 1; filter: brightness(1); } 100% { opacity: 0; filter: brightness(2.5); } }
+@keyframes tx-fade-in-white { 0% { opacity: 0; filter: brightness(2.5); } 100% { opacity: 1; filter: brightness(1); } }
+@keyframes tx-dissolve { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes tx-wipe-left { 0% { clip-path: inset(0 0 0 100%); } 100% { clip-path: inset(0 0 0 0); } }
+@keyframes tx-wipe-right { 0% { clip-path: inset(0 100% 0 0); } 100% { clip-path: inset(0 0 0 0); } }
+@keyframes tx-wipe-up { 0% { clip-path: inset(100% 0 0 0); } 100% { clip-path: inset(0 0 0 0); } }
+@keyframes tx-wipe-down { 0% { clip-path: inset(0 0 100% 0); } 100% { clip-path: inset(0 0 0 0); } }
+@keyframes tx-slide-left { 0% { transform: translateX(100%); } 100% { transform: translateX(0); } }
+@keyframes tx-slide-right { 0% { transform: translateX(-100%); } 100% { transform: translateX(0); } }
+@keyframes tx-push-a-left { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+@keyframes tx-push-b-left { 0% { transform: translateX(100%); } 100% { transform: translateX(0); } }
+@keyframes tx-push-a-right { 0% { transform: translateX(0); } 100% { transform: translateX(100%); } }
+@keyframes tx-push-b-right { 0% { transform: translateX(-100%); } 100% { transform: translateX(0); } }
+@keyframes tx-zoom-in { 0% { transform: scale(0); opacity: 0.4; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes tx-zoom-out-a { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
+@keyframes tx-zoom-out-b { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes tx-iris-in { 0% { clip-path: circle(0% at 50% 50%); } 100% { clip-path: circle(80% at 50% 50%); } }
+@keyframes tx-iris-out { 0% { clip-path: circle(80% at 50% 50%); } 100% { clip-path: circle(0% at 50% 50%); } }
+@keyframes tx-blur-out { 0% { filter: blur(0); opacity: 1; } 100% { filter: blur(24px); opacity: 0; } }
+@keyframes tx-blur-in { 0% { filter: blur(24px); opacity: 0; } 100% { filter: blur(0); opacity: 1; } }
+@keyframes tx-glitch {
+  0%   { opacity: 0; clip-path: inset(0 0 80% 0); transform: translateX(0); }
+  20%  { opacity: 1; clip-path: inset(20% 0 50% 0); transform: translateX(-6px); }
+  40%  { opacity: 1; clip-path: inset(40% 0 20% 0); transform: translateX(6px); }
+  60%  { opacity: 1; clip-path: inset(10% 0 60% 0); transform: translateX(-3px); }
+  80%  { opacity: 1; clip-path: inset(0 0 30% 0); transform: translateX(2px); }
+  100% { opacity: 1; clip-path: inset(0 0 0 0); transform: translateX(0); }
+}
+@keyframes tx-whip-a { 0% { transform: translateX(0); filter: blur(0); } 100% { transform: translateX(-120%); filter: blur(8px); } }
+@keyframes tx-whip-b { 0% { transform: translateX(120%); filter: blur(8px); } 100% { transform: translateX(0); filter: blur(0); } }
+@keyframes tx-dip-a { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 0; } }
+@keyframes tx-dip-b { 0% { opacity: 0; } 50% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes tx-dip-overlay { 0% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes tx-venetian {
+  0%   { clip-path: polygon(0 0,100% 0,100% 0,0 0,0 12%,100% 12%,100% 12%,0 12%,0 24%,100% 24%,100% 24%,0 24%,0 36%,100% 36%,100% 36%,0 36%,0 48%,100% 48%,100% 48%,0 48%,0 60%,100% 60%,100% 60%,0 60%,0 72%,100% 72%,100% 72%,0 72%,0 84%,100% 84%,100% 84%,0 84%); }
+  100% { clip-path: polygon(0 0,100% 0,100% 100%,0 100%); }
+}
+@keyframes tx-clock {
+  0%   { -webkit-mask: conic-gradient(black 0deg, transparent 0deg); mask: conic-gradient(black 0deg, transparent 0deg); }
+  100% { -webkit-mask: conic-gradient(black 360deg, transparent 360deg); mask: conic-gradient(black 360deg, transparent 360deg); }
+}
+@keyframes tx-page-curl {
+  0%   { transform: perspective(800px) rotateY(180deg); opacity: 0; }
+  60%  { opacity: 1; }
+  100% { transform: perspective(800px) rotateY(0deg); opacity: 1; }
+}
+@keyframes tx-morph {
+  0%   { opacity: 0; transform: scale(0.4) rotate(-12deg); filter: blur(20px) hue-rotate(0deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0) hue-rotate(0deg); }
+}
+@keyframes tx-light-leak-b { 0% { opacity: 0; filter: brightness(2); } 100% { opacity: 1; filter: brightness(1); } }
+@keyframes tx-light-leak-overlay { 0% { opacity: 0; } 40% { opacity: 0.9; } 100% { opacity: 0; } }

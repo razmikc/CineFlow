@@ -1,0 +1,42 @@
+/* Card thumbs: static "halfway-through" hint per transition. */
+.tx-thumb {
+  .tx-panel.b { opacity: 0.7; }
+}
+.tx-thumb.tx-anim-cut             .tx-panel.b { opacity: 1; }
+.tx-thumb.tx-anim-fade            .tx-panel.b { opacity: 0.4; }
+.tx-thumb.tx-anim-fade_white      .tx-panel.b { opacity: 0.4; filter: brightness(1.4); }
+.tx-thumb.tx-anim-dissolve        .tx-panel.b { opacity: 0.5; }
+.tx-thumb.tx-anim-wipe_left       .tx-panel.b { clip-path: inset(0 0 0 50%); opacity: 1; }
+.tx-thumb.tx-anim-wipe_right      .tx-panel.b { clip-path: inset(0 50% 0 0); opacity: 1; }
+.tx-thumb.tx-anim-wipe_up         .tx-panel.b { clip-path: inset(50% 0 0 0); opacity: 1; }
+.tx-thumb.tx-anim-wipe_down       .tx-panel.b { clip-path: inset(0 0 50% 0); opacity: 1; }
+.tx-thumb.tx-anim-slide_left      .tx-panel.b { transform: translateX(40%); opacity: 1; }
+.tx-thumb.tx-anim-slide_right     .tx-panel.b { transform: translateX(-40%); opacity: 1; }
+.tx-thumb.tx-anim-push_left       .tx-panel.a { transform: translateX(-40%); }
+.tx-thumb.tx-anim-push_left       .tx-panel.b { transform: translateX(60%); opacity: 1; }
+.tx-thumb.tx-anim-push_right      .tx-panel.a { transform: translateX(40%); }
+.tx-thumb.tx-anim-push_right      .tx-panel.b { transform: translateX(-60%); opacity: 1; }
+.tx-thumb.tx-anim-zoom_in         .tx-panel.b { transform: scale(0.5); opacity: 1; }
+.tx-thumb.tx-anim-zoom_out        .tx-panel.a { transform: scale(1.4); opacity: 0.4; }
+.tx-thumb.tx-anim-zoom_out        .tx-panel.b { opacity: 0.7; }
+.tx-thumb.tx-anim-iris_in         .tx-panel.b { clip-path: circle(35% at 50% 50%); opacity: 1; }
+.tx-thumb.tx-anim-iris_out        .tx-panel.a { clip-path: circle(35% at 50% 50%); }
+.tx-thumb.tx-anim-blur            .tx-panel.a { filter: blur(6px); }
+.tx-thumb.tx-anim-blur            .tx-panel.b { filter: blur(4px); opacity: 0.6; }
+.tx-thumb.tx-anim-glitch          .tx-panel.b { clip-path: inset(20% 0 30% 0); opacity: 1; }
+.tx-thumb.tx-anim-whip_pan        .tx-panel.b { filter: blur(3px); transform: translateX(30%); opacity: 1; }
+.tx-thumb.tx-anim-dip_to_black    { background: #000; }
+.tx-thumb.tx-anim-dip_to_black    .tx-panel.a,
+.tx-thumb.tx-anim-dip_to_black    .tx-panel.b { opacity: 0.55; }
+.tx-thumb.tx-anim-dip_to_white    { background: #fff; }
+.tx-thumb.tx-anim-dip_to_white    .tx-panel.a,
+.tx-thumb.tx-anim-dip_to_white    .tx-panel.b { opacity: 0.45; filter: brightness(1.3); }
+.tx-thumb.tx-anim-dip_to_color    .tx-overlay { opacity: 0.6; background: var(--tx-dip-color, #000); }
+.tx-thumb.tx-anim-venetian_blinds .tx-panel.b {
+  clip-path: polygon(0 0,100% 0,100% 12%,0 12%,0 24%,100% 24%,100% 36%,0 36%,0 48%,100% 48%,100% 60%,0 60%,0 72%,100% 72%,100% 84%,0 84%,0 96%,100% 96%);
+  opacity: 1;
+}
+.tx-thumb.tx-anim-clock_wipe      .tx-panel.b { -webkit-mask: conic-gradient(black 180deg, transparent 180deg); mask: conic-gradient(black 180deg, transparent 180deg); opacity: 1; }
+.tx-thumb.tx-anim-page_curl       .tx-panel.b { transform: perspective(400px) rotateY(40deg); transform-origin: left center; opacity: 1; }
+.tx-thumb.tx-anim-morph           .tx-panel.b { transform: scale(0.8) rotate(-6deg); filter: blur(4px); opacity: 0.7; }
+.tx-thumb.tx-anim-light_leak      .tx-overlay { opacity: 0.6; background: radial-gradient(circle at 75% 30%, rgba(255,200,120,0.9), rgba(255,80,140,0.45) 35%, transparent 70%); }

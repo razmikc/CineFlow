@@ -1,0 +1,188 @@
+/* ============== Transition picker layout ============== */
+.transition-arrow.clickable {
+  cursor: pointer;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.3rem 0.5rem;
+  color: var(--text-2);
+  font: inherit;
+  transition: all 0.15s;
+}
+.transition-arrow.clickable:hover {
+  border-color: var(--neon-violet);
+  color: var(--text-1);
+  transform: translateY(-1px);
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 5, 18, 0.74);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.2rem;
+}
+.modal {
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  padding: 1.2rem 1.3rem;
+  width: 100%;
+  max-width: 980px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tx-preview {
+  position: relative;
+  height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  background: #000;
+  isolation: isolate;
+  --tx-duration: 600ms;
+}
+.tx-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+.tx-panel.a {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #f97316 100%);
+  z-index: 1;
+}
+.tx-panel.b {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+  z-index: 2;
+}
+.tx-video {
+  object-fit: cover;
+  font-size: 0;
+}
+.tx-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tx-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.tx-meta .slider { width: 100%; }
+
+.tx-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+.tx-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  padding: 0;
+  background: rgba(10, 13, 35, 0.4);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  text-align: left;
+  color: var(--text-1);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.tx-card:hover { border-color: rgba(139, 92, 246, 0.5); transform: translateY(-1px); }
+.tx-card.selected {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 0 1px var(--neon-cyan) inset, 0 0 16px rgba(34, 211, 238, 0.25);
+}
+.tx-thumb {
+  position: relative;
+  height: 84px;
+  background: #000;
+  overflow: hidden;
+  isolation: isolate;
+  --tx-duration: 480ms;
+}
+.tx-thumb .tx-panel { font-size: 1.3rem; }
+.tx-card-meta {
+  padding: 0.45rem 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.tx-card-name { font-weight: 600; font-size: 0.86rem; }
+.tx-card-desc { font-size: 0.72rem; color: var(--text-3); line-height: 1.35; }
+
+/* ============== Animations =====================================
+ * Scoped to either `.tx-preview` (always animating when in DOM —
+ * replay forced via re-keyed @for) or `.tx-card:hover .tx-thumb`
+ * (cards animate only on hover).
+ * ============================================================== */
+.tx-preview {
+  &.tx-anim-cut             .tx-panel.b { animation: tx-cut var(--tx-duration) steps(2, end) forwards; }
+  &.tx-anim-fade            .tx-panel.a { animation: tx-fade-out-black var(--tx-duration) ease both; }
+  &.tx-anim-fade            .tx-panel.b { animation: tx-fade-in-black var(--tx-duration) ease both; }
+  &.tx-anim-fade_white      .tx-panel.a { animation: tx-fade-out-white var(--tx-duration) ease both; }
+  &.tx-anim-fade_white      .tx-panel.b { animation: tx-fade-in-white var(--tx-duration) ease both; }
+  &.tx-anim-dissolve        .tx-panel.b { animation: tx-dissolve var(--tx-duration) ease both; }
+  &.tx-anim-wipe_left       .tx-panel.b { animation: tx-wipe-left var(--tx-duration) ease-in-out both; }
+  &.tx-anim-wipe_right      .tx-panel.b { animation: tx-wipe-right var(--tx-duration) ease-in-out both; }
+  &.tx-anim-wipe_up         .tx-panel.b { animation: tx-wipe-up var(--tx-duration) ease-in-out both; }
+  &.tx-anim-wipe_down       .tx-panel.b { animation: tx-wipe-down var(--tx-duration) ease-in-out both; }
+  &.tx-anim-slide_left      .tx-panel.b { animation: tx-slide-left var(--tx-duration) cubic-bezier(.6,.05,.2,1) both; }
+  &.tx-anim-slide_right     .tx-panel.b { animation: tx-slide-right var(--tx-duration) cubic-bezier(.6,.05,.2,1) both; }
+  &.tx-anim-push_left       .tx-panel.a { animation: tx-push-a-left var(--tx-duration) cubic-bezier(.6,.05,.2,1) both; }
+  &.tx-anim-push_left       .tx-panel.b { animation: tx-push-b-left var(--tx-duration) cubic-bezier(.6,.05,.2,1) both; }
+  &.tx-anim-push_right      .tx-panel.a { animation: tx-push-a-right var(--tx-duration) cubic-bezier(.6,.05,.2,1) both; }
+  &.tx-anim-push_right      .tx-panel.b { animation: tx-push-b-right var(--tx-duration) cubic-bezier(.6,.05,.2,1) both; }
+  &.tx-anim-zoom_in         .tx-panel.b { animation: tx-zoom-in var(--tx-duration) ease-out both; }
+  &.tx-anim-zoom_out        .tx-panel.a { animation: tx-zoom-out-a var(--tx-duration) ease-in both; }
+  &.tx-anim-zoom_out        .tx-panel.b { animation: tx-zoom-out-b var(--tx-duration) ease-in both; }
+  &.tx-anim-iris_in         .tx-panel.b { animation: tx-iris-in var(--tx-duration) ease-out both; }
+  &.tx-anim-iris_out        .tx-panel.a { animation: tx-iris-out var(--tx-duration) ease-in both; }
+  &.tx-anim-blur            .tx-panel.a { animation: tx-blur-out var(--tx-duration) ease both; }
+  &.tx-anim-blur            .tx-panel.b { animation: tx-blur-in var(--tx-duration) ease both; }
+  &.tx-anim-glitch          .tx-panel.b { animation: tx-glitch var(--tx-duration) steps(8, end) both; }
+  &.tx-anim-whip_pan        .tx-panel.a { animation: tx-whip-a var(--tx-duration) ease-in-out both; }
+  &.tx-anim-whip_pan        .tx-panel.b { animation: tx-whip-b var(--tx-duration) ease-in-out both; }
+  &.tx-anim-dip_to_black    .tx-panel.a { animation: tx-fade-out-black calc(var(--tx-duration) * 0.5) ease both; }
+  &.tx-anim-dip_to_black    .tx-panel.b { animation: tx-fade-in-black calc(var(--tx-duration) * 0.5) ease calc(var(--tx-duration) * 0.5) both; }
+  &.tx-anim-dip_to_white    .tx-panel.a { animation: tx-fade-out-white calc(var(--tx-duration) * 0.5) ease both; }
+  &.tx-anim-dip_to_white    .tx-panel.b { animation: tx-fade-in-white calc(var(--tx-duration) * 0.5) ease calc(var(--tx-duration) * 0.5) both; }
+  &.tx-anim-dip_to_color    .tx-panel.a { animation: tx-dip-a var(--tx-duration) ease-in both; }
+  &.tx-anim-dip_to_color    .tx-panel.b { animation: tx-dip-b var(--tx-duration) ease-out both; }
+  &.tx-anim-dip_to_color    .tx-overlay { animation: tx-dip-overlay var(--tx-duration) ease both; background: var(--tx-dip-color, #000); }
+  &.tx-anim-venetian_blinds .tx-panel.b { animation: tx-venetian var(--tx-duration) ease-in-out both; }
+  &.tx-anim-clock_wipe      .tx-panel.b { animation: tx-clock var(--tx-duration) linear both; }
+  &.tx-anim-page_curl       .tx-panel.b { animation: tx-page-curl var(--tx-duration) ease-in-out both; transform-origin: left center; }
+  &.tx-anim-morph           .tx-panel.b { animation: tx-morph var(--tx-duration) ease both; }
+  &.tx-anim-light_leak      .tx-panel.b { animation: tx-light-leak-b var(--tx-duration) ease both; }
+  &.tx-anim-light_leak      .tx-overlay { animation: tx-light-leak-overlay var(--tx-duration) ease both; background: radial-gradient(circle at 80% 30%, rgba(255,200,120,0.9), rgba(255,80,140,0.6) 30%, transparent 60%); }
+}
+
+/* thumb hints live in ./transition-thumbs.scss */
+
+/* keyframes live in ./transition-keyframes.scss */
