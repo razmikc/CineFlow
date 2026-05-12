@@ -7,6 +7,7 @@ import { ScenesService } from '../../core/services/scenes.service';
 import { ProjectsService } from '../../core/services/projects.service';
 import { AssetsService } from '../../core/services/assets.service';
 import { JobsService } from '../../core/services/jobs.service';
+import { sampleVideoFor } from '../../core/services/sample-videos';
 import {
   Asset,
   CreativeContract,
@@ -84,6 +85,14 @@ type AssetPickerTarget =
           <div class="ws-grid">
             <section class="preview card">
               <div class="preview-stage" [style.background-image]="'url(' + previewImage() + ')'">
+                <video
+                  class="preview-video"
+                  style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; background: #000;"
+                  [src]="sampleVideoUri(s)"
+                  [poster]="previewImage()"
+                  controls
+                  playsinline
+                  preload="metadata"></video>
                 <div class="overlay-grid">
                   @for (o of overlayObjects(); track o.id) {
                     <button class="overlay-pin" [class.selected]="selectedObjectId() === o.id"
@@ -100,15 +109,6 @@ type AssetPickerTarget =
                   <span class="chip muted">{{ s.durationSec }}s</span>
                   <span class="chip cyan">{{ s.camera.shotType }}</span>
                   <span class="chip cyan">{{ s.camera.movement }}</span>
-                </div>
-                <div class="preview-controls">
-                  <button class="iconbtn">⏮</button>
-                  <button class="iconbtn play-btn">▶</button>
-                  <button class="iconbtn">⏭</button>
-                  <div class="timeline">
-                    <div class="timeline-fill" style="width: 35%"></div>
-                  </div>
-                  <span class="mono" style="font-size: 0.78rem">0:02 / 0:0{{ s.durationSec }}</span>
                 </div>
               </div>
 
@@ -628,6 +628,10 @@ export class SceneWorkspaceComponent {
 
   protected keyframeFor(s: Scene, which: 'startFrame' | 'endFrame'): SceneKeyframe | undefined {
     return s[which];
+  }
+
+  protected sampleVideoUri(s: Scene): string {
+    return sampleVideoFor(s.index);
   }
   protected keyframeThumb(s: Scene, which: 'startFrame' | 'endFrame'): string {
     const kf = this.keyframeFor(s, which);

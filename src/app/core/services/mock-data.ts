@@ -251,7 +251,7 @@ export const MOCK_ASSETS: Asset[] = [
     type: 'video',
     name: 'scene-1-preview.mp4',
     source: 'generated',
-    uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    uri: 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4',
     thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400',
     provider: 'google',
     model: 'Veo 3',

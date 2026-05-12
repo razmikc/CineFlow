@@ -161,9 +161,39 @@ export interface Subtitles {
   style: string;
 }
 
+export type TransitionType =
+  | 'cut'
+  | 'fade'
+  | 'fade_white'
+  | 'dissolve'
+  | 'wipe_left'
+  | 'wipe_right'
+  | 'wipe_up'
+  | 'wipe_down'
+  | 'slide_left'
+  | 'slide_right'
+  | 'push_left'
+  | 'push_right'
+  | 'zoom_in'
+  | 'zoom_out'
+  | 'iris_in'
+  | 'iris_out'
+  | 'blur'
+  | 'glitch'
+  | 'whip_pan'
+  | 'dip_to_black'
+  | 'dip_to_white'
+  | 'dip_to_color'
+  | 'venetian_blinds'
+  | 'clock_wipe'
+  | 'page_curl'
+  | 'morph'
+  | 'light_leak';
+
 export interface Transition {
-  type: 'cut' | 'fade' | 'dissolve' | 'wipe' | 'zoom' | 'morph';
+  type: TransitionType;
   durationMs: number;
+  dipColor?: string; // used by dip_to_color
 }
 
 export interface Continuity {

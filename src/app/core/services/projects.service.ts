@@ -110,7 +110,7 @@ export class ProjectsService {
           progress,
           status: done ? 'completed' : 'rendering',
           uri: done
-            ? 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+            ? 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4'
             : current.finalVideo?.uri,
           thumbnailUri: done
             ? current.scenes[0]?.thumbnailUrl ?? current.thumbnailUrl

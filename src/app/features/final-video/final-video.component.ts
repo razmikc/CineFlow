@@ -1,15 +1,62 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ProjectsService } from '../../core/services/projects.service';
 import { AssetsService } from '../../core/services/assets.service';
 import { JobsService } from '../../core/services/jobs.service';
-import { CreativeContract, Scene } from '../../core/models/contract.model';
+import { sampleVideoFor } from '../../core/services/sample-videos';
+import { Scene, Transition, TransitionType } from '../../core/models/contract.model';
+
+interface TransitionMeta {
+  id: TransitionType;
+  label: string;
+  description: string;
+  defaultDurationMs: number;
+}
+
+const TRANSITION_CATALOG: TransitionMeta[] = [
+  { id: 'cut', label: 'Cut', description: 'Instant switch, no animation.', defaultDurationMs: 0 },
+  { id: 'fade', label: 'Fade (black)', description: 'A fades to black, B fades in.', defaultDurationMs: 600 },
+  { id: 'fade_white', label: 'Fade (white)', description: 'Fade through white — bright reveal.', defaultDurationMs: 600 },
+  { id: 'dissolve', label: 'Dissolve', description: 'B cross-fades over A.', defaultDurationMs: 500 },
+  { id: 'wipe_left', label: 'Wipe ←', description: 'B wipes in from the right.', defaultDurationMs: 500 },
+  { id: 'wipe_right', label: 'Wipe →', description: 'B wipes in from the left.', defaultDurationMs: 500 },
+  { id: 'wipe_up', label: 'Wipe ↑', description: 'B wipes in from the bottom.', defaultDurationMs: 500 },
+  { id: 'wipe_down', label: 'Wipe ↓', description: 'B wipes in from the top.', defaultDurationMs: 500 },
+  { id: 'slide_left', label: 'Slide ←', description: 'B slides over A from the right.', defaultDurationMs: 550 },
+  { id: 'slide_right', label: 'Slide →', description: 'B slides over A from the left.', defaultDurationMs: 550 },
+  { id: 'push_left', label: 'Push ←', description: 'A and B shift together, A exits left.', defaultDurationMs: 600 },
+  { id: 'push_right', label: 'Push →', description: 'A and B shift together, A exits right.', defaultDurationMs: 600 },
+  { id: 'zoom_in', label: 'Zoom in', description: 'B zooms up from center.', defaultDurationMs: 600 },
+  { id: 'zoom_out', label: 'Zoom out', description: 'A blows out as B emerges.', defaultDurationMs: 700 },
+  { id: 'iris_in', label: 'Iris in', description: 'Circular reveal opening.', defaultDurationMs: 700 },
+  { id: 'iris_out', label: 'Iris out', description: 'Circular close.', defaultDurationMs: 700 },
+  { id: 'blur', label: 'Blur', description: 'A blurs out, B blurs in.', defaultDurationMs: 600 },
+  { id: 'glitch', label: 'Glitch', description: 'Digital glitch reveal.', defaultDurationMs: 450 },
+  { id: 'whip_pan', label: 'Whip pan', description: 'Fast horizontal pan with motion blur.', defaultDurationMs: 420 },
+  { id: 'dip_to_black', label: 'Dip to black', description: 'Both ends touch black.', defaultDurationMs: 900 },
+  { id: 'dip_to_white', label: 'Dip to white', description: 'Both ends touch white.', defaultDurationMs: 900 },
+  { id: 'dip_to_color', label: 'Dip to color', description: 'Dip through your brand color.', defaultDurationMs: 900 },
+  { id: 'venetian_blinds', label: 'Venetian blinds', description: 'Horizontal slats reveal B.', defaultDurationMs: 700 },
+  { id: 'clock_wipe', label: 'Clock wipe', description: 'Rotational sweep.', defaultDurationMs: 800 },
+  { id: 'page_curl', label: 'Page curl', description: 'Page peels in with perspective.', defaultDurationMs: 800 },
+  { id: 'morph', label: 'Morph', description: 'Blur + scale + rotate blend.', defaultDurationMs: 700 },
+  { id: 'light_leak', label: 'Light leak', description: 'Warm film-leak burst masks the cut.', defaultDurationMs: 700 },
+];
 
 @Component({
   selector: 'app-final-video',
-  imports: [RouterLink, DatePipe, DecimalPipe],
+  imports: [RouterLink, DatePipe, DecimalPipe, FormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (project(); as p) {
@@ -65,10 +112,14 @@ import { CreativeContract, Scene } from '../../core/models/contract.model';
                   </div>
                 </a>
                 @if (!last) {
-                  <div class="transition-arrow" [title]="s.transitionOut.type + ' · ' + s.transitionOut.durationMs + 'ms'">
+                  <button
+                    type="button"
+                    class="transition-arrow clickable"
+                    [title]="transitionLabel(s.transitionOut.type) + ' · ' + s.transitionOut.durationMs + 'ms — click to change'"
+                    (click)="openTransitionPicker(s.id)">
                     <span class="arrow-line"></span>
-                    <span class="arrow-label">{{ s.transitionOut.type }}</span>
-                  </div>
+                    <span class="arrow-label">{{ transitionLabel(s.transitionOut.type) }}</span>
+                  </button>
                 }
               }
             </div>
@@ -158,6 +209,96 @@ import { CreativeContract, Scene } from '../../core/models/contract.model';
             <div class="kv"><span class="muted">Video model</span><span>{{ p.models.video.model }}</span></div>
           </aside>
         </section>
+
+        @if (pickerOpenForSceneId(); as sceneId) {
+          <div class="modal-backdrop" (click)="closeTransitionPicker()">
+            <div class="modal" (click)="$event.stopPropagation()">
+              <div class="row" style="justify-content: space-between; align-items: flex-start">
+                <div>
+                  <div class="eyebrow">Transition · scene {{ pickerSceneIndex() + 1 }} → {{ pickerSceneIndex() + 2 }}</div>
+                  <h3 style="margin-top: 4px">{{ transitionLabel(draft().type) }}</h3>
+                  <p class="muted" style="font-size: 0.82rem; margin-top: 2px">{{ transitionDescription(draft().type) }}</p>
+                </div>
+                <button class="iconbtn" type="button" (click)="closeTransitionPicker()">×</button>
+              </div>
+
+              <div [class]="previewClass()"
+                [style.--tx-duration.ms]="draft().durationMs"
+                [style.--tx-dip-color]="draft().dipColor || '#000000'">
+                @if (useRealVideo()) {
+                  <video #videoA class="tx-panel a tx-video"
+                    [src]="previewVideoA()"
+                    autoplay muted loop playsinline preload="auto"></video>
+                  <video #videoB class="tx-panel b tx-video"
+                    [src]="previewVideoB()"
+                    autoplay muted loop playsinline preload="auto"></video>
+                } @else {
+                  <div class="tx-panel a">A</div>
+                  <div class="tx-panel b">B</div>
+                }
+                <div class="tx-overlay"></div>
+              </div>
+
+              <div class="tx-meta">
+                <button class="btn primary sm" type="button" (click)="replayPreview()">▶ Play preview</button>
+                <button class="btn cool sm" type="button" (click)="playMerged()" [disabled]="merging()">
+                  @if (merging()) { <span class="loader"></span> Merging… }
+                  @else { 🎞 Play merged }
+                </button>
+                <label class="check-line" style="margin: 0">
+                  <input type="checkbox" [ngModel]="useRealVideo()" (ngModelChange)="toggleRealVideo($event)"/>
+                  <span>Use sample videos</span>
+                </label>
+                <div style="flex: 1; min-width: 220px">
+                  <label class="field">Duration {{ draft().durationMs }}ms</label>
+                  <input type="range" min="0" max="1500" step="20"
+                    [ngModel]="draft().durationMs"
+                    (ngModelChange)="updateDraft({ durationMs: +$event })"
+                    class="slider"/>
+                </div>
+                @if (draft().type === 'dip_to_color') {
+                  <div>
+                    <label class="field">Dip color</label>
+                    <input type="color"
+                      [ngModel]="draft().dipColor || '#000000'"
+                      (ngModelChange)="updateDraft({ dipColor: $event })"/>
+                  </div>
+                }
+                <span class="spacer"></span>
+                <button class="btn ghost sm" type="button" (click)="closeTransitionPicker()">Cancel</button>
+                <button class="btn cool" type="button" (click)="saveTransition()">Save transition</button>
+              </div>
+
+              @if (useRealVideo()) {
+                <div class="muted" style="font-size: 0.78rem">
+                  Scene {{ pickerSceneIndex() + 1 }}: <span class="mono">{{ shortName(previewVideoA()) }}</span>
+                  · Scene {{ pickerSceneIndex() + 2 }}: <span class="mono">{{ shortName(previewVideoB()) }}</span>
+                </div>
+              }
+
+              <div class="tx-grid">
+                @for (t of catalog; track t.id) {
+                  <button class="tx-card" type="button"
+                    [class.selected]="draft().type === t.id"
+                    (click)="pickTransition(t)">
+                    <div class="tx-thumb"
+                      [class]="'tx-anim-' + t.id"
+                      [style.--tx-duration.ms]="t.defaultDurationMs || 300"
+                      [style.--tx-dip-color]="t.id === 'dip_to_color' ? (draft().dipColor || '#0A3055') : '#000'">
+                      <div class="tx-panel a">A</div>
+                      <div class="tx-panel b">B</div>
+                      <div class="tx-overlay"></div>
+                    </div>
+                    <div class="tx-card-meta">
+                      <div class="tx-card-name">{{ t.label }}</div>
+                      <div class="tx-card-desc">{{ t.description }}</div>
+                    </div>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+        }
       </div>
     } @else {
       <div class="loading">
@@ -166,7 +307,12 @@ import { CreativeContract, Scene } from '../../core/models/contract.model';
       </div>
     }
   `,
-  styleUrl: './final-video.component.scss',
+  styleUrls: [
+    './final-video.component.scss',
+    './transitions.scss',
+    './transition-thumbs.scss',
+    './transition-keyframes.scss',
+  ],
 })
 export class FinalVideoComponent {
   private readonly route = inject(ActivatedRoute);
@@ -288,5 +434,127 @@ export class FinalVideoComponent {
     const p = this.project();
     if (!p) return;
     this.projectsSvc.resetFinalRender(p.id).subscribe();
+  }
+
+  /* ============ Transition picker ============ */
+  protected readonly catalog = TRANSITION_CATALOG;
+  protected readonly pickerOpenForSceneId = signal<string | null>(null);
+  protected readonly draft = signal<Transition>({ type: 'fade', durationMs: 500 });
+  protected readonly playing = signal(true);
+  protected readonly useRealVideo = signal(true);
+  protected readonly merging = signal(false);
+
+  private readonly videoA = viewChild<ElementRef<HTMLVideoElement>>('videoA');
+  private readonly videoB = viewChild<ElementRef<HTMLVideoElement>>('videoB');
+
+  protected readonly previewClass = computed(() => {
+    const parts = ['tx-preview'];
+    if (this.useRealVideo()) parts.push('use-video');
+    if (this.playing()) parts.push('tx-anim-' + this.draft().type);
+    return parts.join(' ');
+  });
+
+  protected readonly previewVideoA = computed(() => {
+    const i = this.pickerSceneIndex();
+    return sampleVideoFor(i);
+  });
+  protected readonly previewVideoB = computed(() => {
+    const i = this.pickerSceneIndex();
+    return sampleVideoFor(i + 1);
+  });
+
+  protected shortName(uri: string): string {
+    const parts = uri.split('/');
+    return parts[parts.length - 1] || uri;
+  }
+
+  protected toggleRealVideo(on: boolean) {
+    this.useRealVideo.set(on);
+    this.replayPreview();
+  }
+
+  protected playMerged() {
+    if (this.merging()) return;
+    this.useRealVideo.set(true);
+    this.merging.set(true);
+    this.replayPreview();
+    setTimeout(() => this.merging.set(false), this.draft().durationMs + 1200);
+  }
+
+  private rewindVideos() {
+    const a = this.videoA()?.nativeElement;
+    const b = this.videoB()?.nativeElement;
+    [a, b].forEach((v) => {
+      if (!v) return;
+      try {
+        v.currentTime = 0;
+        const pr = v.play();
+        if (pr && typeof pr.catch === 'function') pr.catch(() => undefined);
+      } catch {
+        /* ignore */
+      }
+    });
+  }
+
+  protected readonly pickerSceneIndex = computed(() => {
+    const id = this.pickerOpenForSceneId();
+    const p = this.project();
+    if (!id || !p) return 0;
+    return p.scenes.findIndex((s) => s.id === id);
+  });
+
+  protected transitionLabel(type: TransitionType): string {
+    return this.catalog.find((t) => t.id === type)?.label ?? type;
+  }
+  protected transitionDescription(type: TransitionType): string {
+    return this.catalog.find((t) => t.id === type)?.description ?? '';
+  }
+
+  protected openTransitionPicker(sceneId: string) {
+    const p = this.project();
+    if (!p) return;
+    const scene = p.scenes.find((s) => s.id === sceneId);
+    if (!scene) return;
+    this.draft.set({ ...scene.transitionOut });
+    this.pickerOpenForSceneId.set(sceneId);
+    this.replayPreview();
+  }
+
+  protected closeTransitionPicker() {
+    this.pickerOpenForSceneId.set(null);
+  }
+
+  protected pickTransition(meta: TransitionMeta) {
+    const current = this.draft();
+    this.draft.set({
+      type: meta.id,
+      durationMs: meta.defaultDurationMs || current.durationMs,
+      dipColor: current.dipColor,
+    });
+    this.replayPreview();
+  }
+
+  protected updateDraft(patch: Partial<Transition>) {
+    this.draft.update((d) => ({ ...d, ...patch }));
+    this.replayPreview();
+  }
+
+  protected replayPreview() {
+    this.playing.set(false);
+    setTimeout(() => {
+      this.playing.set(true);
+      this.rewindVideos();
+    }, 40);
+  }
+
+  protected saveTransition() {
+    const sceneId = this.pickerOpenForSceneId();
+    const p = this.project();
+    if (!sceneId || !p) return;
+    const scenes = p.scenes.map((s) =>
+      s.id === sceneId ? { ...s, transitionOut: this.draft() } : s,
+    );
+    this.projectsSvc.update(p.id, { scenes }).subscribe();
+    this.closeTransitionPicker();
   }
 }
