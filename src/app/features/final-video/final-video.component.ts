@@ -184,7 +184,7 @@ const TRANSITION_CATALOG: TransitionMeta[] = [
               <div class="muted" style="font-size: 0.78rem; margin-top: 0.6rem">
                 Rendered {{ p.finalVideo!.renderedAt | date: 'medium' }} ·
                 {{ p.finalVideo!.durationSec }}s ·
-                {{ p.output.aspectRatio }} {{ p.output.resolution }} @ {{ p.output.fps }}fps
+                {{ p.output.aspectRatio }} {{ p.output.resolution }} &#64; {{ p.output.fps }}fps
               </div>
             }
           </div>
