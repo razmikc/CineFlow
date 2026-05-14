@@ -6,7 +6,10 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { ScenesService } from '../../core/services/scenes.service';
 import { ProjectsService } from '../../core/services/projects.service';
 import { AssetsService } from '../../core/services/assets.service';
+import { AudioEditorBridgeService } from '../../core/services/audio-editor-bridge.service';
+import { ImageEditorBridgeService } from '../../core/services/image-editor-bridge.service';
 import { JobsService } from '../../core/services/jobs.service';
+import { ModelsService } from '../../core/services/models.service';
 import { sampleVideoFor } from '../../core/services/sample-videos';
 import {
   Asset,
@@ -20,7 +23,12 @@ import {
 type AssetPickerTarget =
   | { kind: 'object'; objectId: string }
   | { kind: 'startFrame' }
-  | { kind: 'endFrame' };
+  | { kind: 'endFrame' }
+  | { kind: 'backgroundMusic' }
+  | { kind: 'narrationVoice' };
+
+const AUDIO_OBJECT_TYPES = new Set<string>(['music', 'sfx', 'voice']);
+const VISUAL_OBJECT_TYPES: ReadonlyArray<string> = ['character', 'prop', 'background', 'effect', 'subtitle'];
 
 @Component({
   selector: 'app-scene-workspace',
@@ -44,16 +52,16 @@ type AssetPickerTarget =
               <p class="muted" style="margin-top: 6px; font-size: 0.85rem">{{ s.objective }}</p>
             </div>
             <div class="row" style="flex-wrap: wrap; gap: 0.4rem">
-              <button class="btn ghost sm" (click)="prepareScene()" [disabled]="isPreparing()">
-                @if (isPreparing()) { <span class="loader"></span> Preparing… }
-                @else { ⚡ Prepare scene }
-              </button>
               <button class="btn primary sm" (click)="generateScene()" [disabled]="s.review.status === 'generating'">
                 ▶ Generate scene
               </button>
               <button class="btn cool sm" (click)="approveScene()"
                 [disabled]="s.review.status === 'approved'">
                 ✓ {{ s.review.status === 'approved' ? 'Approved' : 'Approve' }}
+              </button>
+              <button class="btn ghost sm" (click)="saveDraft()" [disabled]="draftSaving()">
+                @if (draftSaving()) { <span class="loader"></span> Saving… }
+                @else { 💾 Save draft }
               </button>
               <button class="btn sm" (click)="goNext()"
                 [disabled]="!canGoNext()" [title]="canGoNext() ? '' : 'Approve this scene first'">
@@ -82,8 +90,8 @@ type AssetPickerTarget =
             }
           </nav>
 
-          <div class="ws-grid">
-            <section class="preview card">
+          @if (hasRenderedVideo()) {
+            <section class="card preview">
               <div class="preview-stage" [style.background-image]="'url(' + previewImage() + ')'">
                 <video
                   class="preview-video"
@@ -93,16 +101,6 @@ type AssetPickerTarget =
                   controls
                   playsinline
                   preload="metadata"></video>
-                <div class="overlay-grid">
-                  @for (o of overlayObjects(); track o.id) {
-                    <button class="overlay-pin" [class.selected]="selectedObjectId() === o.id"
-                      [style.left.%]="o.x" [style.top.%]="o.y"
-                      (click)="selectObject(o.id)">
-                      <span class="pin-dot"></span>
-                      <span class="pin-label">{{ o.name }}</span>
-                    </button>
-                  }
-                </div>
                 <div class="preview-meta">
                   <span class="chip muted">{{ p.output.aspectRatio }}</span>
                   <span class="chip muted">{{ p.output.resolution }}</span>
@@ -111,195 +109,372 @@ type AssetPickerTarget =
                   <span class="chip cyan">{{ s.camera.movement }}</span>
                 </div>
               </div>
-
-              <div class="keyframes-row">
-                @for (kf of keyframeSlots; track kf.which) {
-                  <div class="keyframe">
-                    <div class="kf-thumb" [style.background-image]="'url(' + keyframeThumb(s, kf.which) + ')'">
-                      <span class="kf-icon">{{ kf.icon }}</span>
-                      @if (keyframeFor(s, kf.which); as data) {
-                        @if (data.locked) { <span class="kf-lock">🔒</span> }
-                      }
-                    </div>
-                    <div class="kf-body">
-                      <strong style="font-size: 0.82rem">{{ kf.label }}</strong>
-                      <input class="kf-desc" [ngModel]="keyframeFor(s, kf.which)?.description ?? ''"
-                        (ngModelChange)="updateKeyframe(kf.which, { description: $event })"
-                        placeholder="describe this keyframe…"/>
-                      <div class="row" style="gap: 0.3rem; margin-top: 0.3rem; flex-wrap: wrap">
-                        <button class="btn ghost sm" (click)="generateKeyframe(kf.which)">✨ Generate</button>
-                        <button class="btn sm" (click)="openAssetPicker({ kind: kf.which })">📁 Replace</button>
-                        <button class="btn sm" (click)="updateKeyframe(kf.which, { locked: !keyframeFor(s, kf.which)?.locked })">
-                          {{ keyframeFor(s, kf.which)?.locked ? '🔓 Unlock' : '🔒 Lock' }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+            </section>
+          } @else {
+            <div class="prep-banner" [class]="'tone-' + statusTone(s.review.status)">
+              <div>
+                <div class="prep-banner-title">{{ previewStateLabel(s) }}</div>
+                <p class="muted" style="font-size: 0.82rem; margin-top: 0.2rem">{{ previewStateHelp(s) }}</p>
+              </div>
+              <div class="row" style="gap: 0.4rem; flex-wrap: wrap">
+                @if (s.review.status === 'generating') {
+                  <span class="row" style="gap: 0.4rem"><span class="loader"></span> Rendering…</span>
+                } @else if (s.review.status === 'failed') {
+                  <button class="btn primary" (click)="generateScene()">↻ Retry generation</button>
+                } @else {
+                  <button class="btn primary" (click)="generateScene()">▶ Generate scene video</button>
                 }
               </div>
+            </div>
+          }
 
-              <div class="prompt-panel">
-                <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
-                  <div class="section-title" style="margin: 0">
-                    Compiled scene prompt
-                    @if (s.promptOverride) { <span class="chip amber sm-chip">edited</span> }
-                  </div>
+
+          <section class="layers-section">
+            <header class="layers-head">
+              <div>
+                <h2 class="section-title" style="margin: 0; font-size: 1.05rem">Scene layers</h2>
+                <p class="muted" style="font-size: 0.82rem; margin-top: 0.25rem; max-width: 70ch">
+                  Every ingredient the AI needs to render this scene. Edit any layer in place — when everything looks right,
+                  hit <strong>Generate scene</strong> above and the video appears here.
+                </p>
+              </div>
+              <span class="muted" style="font-size: 0.74rem; align-self: center">{{ layerCount(s) }} layers</span>
+            </header>
+
+            <div class="layers-grid">
+              <article class="layer-card layer-prompt layer-row">
+                <header class="layer-head">
+                  <span class="layer-icon">📝</span>
+                  <strong>Scene prompt</strong>
+                  @if (s.promptOverride) { <span class="chip amber">edited</span> }
+                  <span class="spacer"></span>
                   <div class="row" style="gap: 0.3rem">
                     @if (!editingPrompt()) {
-                      <button class="btn sm" (click)="startEditPrompt()">✏️ Edit raw</button>
-                      <button class="btn primary sm" (click)="regeneratePrompt()">↻ Regenerate prompt</button>
+                      <button class="btn ghost sm" (click)="startEditPrompt()">✏️ Edit raw</button>
+                      <button class="btn primary sm" (click)="regeneratePrompt()">↻ Regenerate</button>
                     } @else {
                       <button class="btn sm" (click)="cancelEditPrompt()">Cancel</button>
                       <button class="btn primary sm" (click)="saveEditPrompt()">Save</button>
+                      @if (s.promptOverride) {
+                        <button class="btn ghost sm" (click)="resetPromptToCompiled()">Reset</button>
+                      }
                     }
                   </div>
-                </div>
+                </header>
                 @if (!editingPrompt()) {
                   <div class="prompt-text mono">{{ effectivePrompt() }}</div>
                 } @else {
-                  <textarea class="prompt-edit mono" rows="12"
+                  <textarea class="prompt-edit mono" rows="6"
                     [ngModel]="promptDraft()" (ngModelChange)="promptDraft.set($event)"></textarea>
-                  @if (s.promptOverride) {
-                    <button class="btn ghost sm" (click)="resetPromptToCompiled()" style="margin-top: 0.4rem">
-                      Reset to compiled
-                    </button>
+                }
+              </article>
+
+              <article class="layer-card layer-row keyframes-pair">
+                <header class="layer-head">
+                  <span class="layer-icon">🎞</span>
+                  <strong>Start &amp; end frames</strong>
+                  <span class="muted" style="font-size: 0.78rem">scene opens here · ends here</span>
+                </header>
+                <div class="keyframes-inner">
+                  @for (kf of keyframeSlots; track kf.which; let isLast = $last) {
+                    <div class="keyframe-slot">
+                      <div class="keyframe-slot-label">
+                        <span class="layer-icon">{{ kf.icon }}</span>
+                        <strong>{{ kf.label }}</strong>
+                        <span class="chip" [class]="keyframeFor(s, kf.which)?.assetId ? 'green' : 'muted'">
+                          {{ keyframeFor(s, kf.which)?.assetId ? 'ready' : 'empty' }}
+                        </span>
+                        @if (keyframeFor(s, kf.which)?.locked) { <span class="chip green">🔒</span> }
+                      </div>
+                      <div class="layer-thumb" [style.background-image]="'url(' + keyframeThumb(s, kf.which) + ')'">
+                        @if (!keyframeThumb(s, kf.which)) {
+                          <div class="layer-thumb-empty">Not generated yet</div>
+                        }
+                        @if (keyframeThumb(s, kf.which)) {
+                          <button class="edit-img-btn" type="button" title="Edit {{ kf.label }} in image editor" (click)="editKeyframe(s, kf.which, kf.label)">
+                            <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                          </button>
+                        }
+                      </div>
+                      <input class="layer-desc" [ngModel]="keyframeFor(s, kf.which)?.description ?? ''"
+                        (ngModelChange)="updateKeyframe(kf.which, { description: $event })"
+                        placeholder="describe this keyframe…"/>
+                      <div class="layer-actions">
+                        <button class="btn ghost sm" (click)="generateKeyframe(kf.which)" title="Generate">✨ Generate</button>
+                        <button class="btn sm" (click)="openAssetPicker({ kind: kf.which })" title="Pick from assets">📁 Replace</button>
+                        <button class="btn sm" (click)="updateKeyframe(kf.which, { locked: !keyframeFor(s, kf.which)?.locked })" [title]="keyframeFor(s, kf.which)?.locked ? 'Unlock' : 'Lock'">
+                          {{ keyframeFor(s, kf.which)?.locked ? '🔓' : '🔒' }}
+                        </button>
+                      </div>
+                    </div>
+                    @if (!isLast) {
+                      <div class="keyframe-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 48 24" width="48" height="24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M2 12h40" stroke-linecap="round"/>
+                          <path d="m36 6 8 6-8 6" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span class="keyframe-arrow-label">scene flow</span>
+                      </div>
+                    }
+                  }
+                </div>
+              </article>
+
+              <article class="layer-card layer-audio">
+                <header class="layer-head">
+                  <span class="layer-icon">🎵</span>
+                  <strong>Background music</strong>
+                  <span class="chip" [class]="s.audio.backgroundMusic.assetId ? 'green' : 'muted'">
+                    {{ s.audio.backgroundMusic.assetId ? 'ready' : (s.audio.backgroundMusic.genre || 'not set') }}
+                  </span>
+                </header>
+                <div class="row" style="gap: 0.3rem; flex-wrap: wrap">
+                  <button class="tab sm" type="button" [class.active]="s.audio.backgroundMusic.mode === 'generate'" (click)="updateBackgroundMusic({ mode: 'generate' })">Generate</button>
+                  <button class="tab sm" type="button" [class.active]="s.audio.backgroundMusic.mode === 'asset'" (click)="updateBackgroundMusic({ mode: 'asset' })">Asset</button>
+                  <button class="tab sm" type="button" [class.active]="s.audio.backgroundMusic.mode === 'manual'" (click)="updateBackgroundMusic({ mode: 'manual' })">Manual</button>
+                </div>
+                @if (s.audio.backgroundMusic.mode !== 'asset') {
+                  <div class="grid-2" style="margin-top: 0.4rem; gap: 0.4rem">
+                    <input
+                      [ngModel]="s.audio.backgroundMusic.genre"
+                      (ngModelChange)="updateBackgroundMusic({ genre: $event })"
+                      placeholder="genre"/>
+                    <input
+                      [ngModel]="s.audio.backgroundMusic.tempo"
+                      (ngModelChange)="updateBackgroundMusic({ tempo: $event })"
+                      placeholder="tempo"/>
+                  </div>
+                }
+                @if (s.audio.backgroundMusic.assetId; as aid) {
+                  @if (assets.get(aid); as a) {
+                    <div class="layer-asset">
+                      <span style="font-size: 1.2rem">🎵</span>
+                      <div style="flex: 1; min-width: 0">
+                        <div style="font-size: 0.84rem; font-weight: 600">{{ a.name }}</div>
+                        <div class="muted" style="font-size: 0.72rem">{{ a.provider || 'manual' }}{{ a.durationSec ? ' · ' + a.durationSec + 's' : '' }}</div>
+                      </div>
+                      <button class="iconbtn sm" (click)="updateBackgroundMusic({ assetId: undefined })" title="Detach">×</button>
+                    </div>
+                    <audio class="layer-audio-player" controls preload="metadata" [src]="a.uri"></audio>
                   }
                 }
-              </div>
-            </section>
+                <div class="layer-actions">
+                  <button class="btn sm" type="button" (click)="openAssetPicker({ kind: 'backgroundMusic' })">
+                    📁 {{ s.audio.backgroundMusic.assetId ? 'Replace' : 'Pick' }}
+                  </button>
+                  @if (s.audio.backgroundMusic.assetId) {
+                    <button class="btn sm" type="button" (click)="editMusic()" title="Trim / stretch / fade">✏️ Edit</button>
+                  }
+                  @if (s.audio.backgroundMusic.mode === 'generate') {
+                    <button class="btn primary sm" type="button">✨ Generate</button>
+                  }
+                </div>
+              </article>
 
-            <aside class="objects-panel card">
-              <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
-                <div class="section-title" style="margin: 0">Objects ({{ s.objects.length }})</div>
-                <button class="btn ghost sm" (click)="addObject()">+ Add</button>
-              </div>
-              <div class="objects-list">
-                @for (o of s.objects; track o.id) {
-                  <button class="object-row" [class.selected]="selectedObjectId() === o.id"
-                    (click)="selectObject(o.id)">
-                    @if (assetForObject(o); as a) {
-                      <span class="object-thumb" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'"></span>
-                    } @else {
-                      <span class="object-icon" [innerHTML]="iconFor(o.type)"></span>
+              <article class="layer-card layer-audio">
+                <header class="layer-head">
+                  <span class="layer-icon">🔊</span>
+                  <strong>Sound effects</strong>
+                  <span class="chip" [class]="s.audio.soundEffects.length > 0 ? 'cyan' : 'muted'">
+                    {{ s.audio.soundEffects.length }}
+                  </span>
+                </header>
+                <p class="muted" style="font-size: 0.76rem">Footsteps, door slam, ambient crowd, etc.</p>
+                <div class="chip-input">
+                  @for (sfx of s.audio.soundEffects; track sfx) {
+                    <span class="chip cyan">{{ sfx }} <button class="x" type="button" (click)="removeSoundEffect(sfx)">×</button></span>
+                  }
+                  <input
+                    #sfxInput
+                    placeholder="add + Enter"
+                    (keydown.enter)="addSoundEffect(sfxInput.value); sfxInput.value = ''"
+                  />
+                </div>
+              </article>
+
+              <article class="layer-card layer-audio">
+                <header class="layer-head">
+                  <span class="layer-icon">🎙</span>
+                  <strong>Narration</strong>
+                  <span class="chip" [class]="s.narration.text.trim() ? 'cyan' : 'muted'">
+                    {{ s.narration.text.trim() ? 'dialogue' : 'silent' }}
+                  </span>
+                </header>
+                <textarea
+                  rows="3"
+                  [ngModel]="s.narration.text"
+                  (ngModelChange)="updateNarration({ text: $event })"
+                  placeholder="dialogue or VO text…"
+                ></textarea>
+                @if (s.narration.voiceRef) {
+                  <div class="row" style="gap: 0.4rem; align-items: center; margin-top: 0.3rem">
+                    <span class="chip cyan">{{ narrationVoiceLabel(s) }}</span>
+                    <button class="iconbtn sm" (click)="updateNarration({ voiceRef: '' })" title="Clear voice">×</button>
+                  </div>
+                  @if (narrationAsset(s); as va) {
+                    <audio class="layer-audio-player" controls preload="metadata" [src]="va.uri"></audio>
+                  }
+                } @else if (voiceModels().length > 0) {
+                  <div class="row" style="gap: 0.3rem; margin-top: 0.3rem; flex-wrap: wrap">
+                    @for (m of voiceModels(); track m.id) {
+                      <button class="tab sm" type="button" (click)="updateNarration({ voiceRef: m.id })">
+                        {{ m.provider }}
+                      </button>
                     }
-                    <div style="flex: 1; min-width: 0; text-align: left">
-                      <div class="row" style="gap: 0.4rem">
-                        <strong style="font-size: 0.86rem">{{ o.name }}</strong>
-                        @if (o.locked) { <span class="chip green sm-chip">🔒</span> }
-                      </div>
-                      <div class="muted" style="font-size: 0.74rem; margin-top: 2px">{{ o.type }}</div>
+                  </div>
+                }
+                <div class="layer-actions">
+                  <button class="btn sm" type="button" (click)="openAssetPicker({ kind: 'narrationVoice' })">📁 Voice</button>
+                  @if (narrationAsset(s)) {
+                    <button class="btn sm" type="button" (click)="editNarration()" title="Trim / stretch / fade">✏️ Edit</button>
+                  }
+                  @if (s.narration.text.trim()) {
+                    <button class="btn primary sm" type="button">✨ Generate VO</button>
+                  }
+                </div>
+              </article>
+
+              <article class="layer-card layer-audio">
+                <header class="layer-head">
+                  <span class="layer-icon">💬</span>
+                  <strong>Subtitles</strong>
+                  <label class="row" style="margin-left: auto; gap: 0.3rem; font-size: 0.78rem">
+                    <input
+                      type="checkbox"
+                      [ngModel]="s.subtitles.enabled"
+                      (ngModelChange)="updateSubtitles({ enabled: $event })"
+                    />
+                    Enabled
+                  </label>
+                </header>
+                @if (s.subtitles.enabled) {
+                  <textarea
+                    rows="2"
+                    [ngModel]="subtitleText(s)"
+                    (ngModelChange)="updateSubtitles({ text: $event })"
+                    [placeholder]="s.narration.text.trim() ? 'Defaults to narration above — type here to override' : 'Subtitle text for this scene'"
+                  ></textarea>
+                  <div class="row" style="gap: 0.4rem; margin-top: 0.4rem; flex-wrap: wrap; font-size: 0.78rem">
+                    <select
+                      [ngModel]="s.subtitles.style"
+                      (ngModelChange)="updateSubtitles({ style: $event })"
+                      style="flex: 1; min-width: 140px"
+                    >
+                      <option value="clean lower third">Clean lower third</option>
+                      <option value="karaoke">Karaoke</option>
+                      <option value="bold caption">Bold caption</option>
+                      <option value="minimal">Minimal</option>
+                      <option value="documentary">Documentary</option>
+                    </select>
+                    <input
+                      [ngModel]="s.subtitles.fontFamily ?? ''"
+                      (ngModelChange)="updateSubtitles({ fontFamily: $event || undefined })"
+                      [placeholder]="globalSubtitleFont() + ' (project default)'"
+                      style="flex: 1; min-width: 120px"
+                    />
+                    <input
+                      type="color"
+                      [ngModel]="s.subtitles.color ?? globalSubtitleColor()"
+                      (ngModelChange)="updateSubtitles({ color: $event })"
+                      title="Per-scene color override"
+                    />
+                  </div>
+                  @if (subtitleText(s); as preview) {
+                    <div
+                      class="subtitle-preview"
+                      [style.font-family]="s.subtitles.fontFamily || globalSubtitleFont()"
+                      [style.color]="s.subtitles.color || globalSubtitleColor()"
+                      style="margin-top: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 6px; background: rgba(0,0,0,0.55); display: inline-block; font-size: 0.9rem"
+                    >
+                      {{ preview }}
                     </div>
+                  }
+                } @else {
+                  <p class="muted" style="font-size: 0.82rem">Subtitles are off for this scene. Toggle to overlay text from the narration.</p>
+                }
+              </article>
+
+              @for (o of visualObjects(); track o.id) {
+                <article class="layer-card layer-visual" [class.locked]="o.locked" [class.selected]="selectedObjectId() === o.id" (click)="selectObject(o.id)">
+                  <header class="layer-head">
+                    <span class="layer-icon" [innerHTML]="iconFor(o.type)"></span>
+                    <input class="layer-name-input" [ngModel]="o.name" (ngModelChange)="updateObject(o.id, { name: $event })" (click)="$event.stopPropagation()"/>
+                    <span class="chip muted">{{ o.type }}</span>
                     <span class="status-chip" [class]="o.status">●</span>
-                  </button>
-                }
-                @if (s.objects.length === 0) {
-                  <div class="empty-objects">
-                    <p class="muted" style="font-size: 0.82rem">No objects yet. Add a character, prop, or sound.</p>
-                  </div>
-                }
-              </div>
-            </aside>
-
-            <aside class="inspector card">
-              @if (selectedObject(); as obj) {
-                <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
-                  <div class="section-title" style="margin: 0">Inspector</div>
-                  <span class="chip muted">{{ obj.type }}</span>
-                </div>
-                <label class="field">Type</label>
-                <select [ngModel]="obj.type" (ngModelChange)="updateObject(obj.id, { type: $event })">
-                  <option value="character">character</option>
-                  <option value="prop">prop</option>
-                  <option value="background">background</option>
-                  <option value="effect">effect</option>
-                  <option value="subtitle">subtitle</option>
-                  <option value="music">music</option>
-                  <option value="sfx">sfx</option>
-                  <option value="voice">voice</option>
-                </select>
-
-                <label class="field" style="margin-top: 0.7rem">Name</label>
-                <input [ngModel]="obj.name" (ngModelChange)="updateObject(obj.id, { name: $event })"/>
-
-                <label class="field" style="margin-top: 0.7rem">Description</label>
-                <textarea rows="2" [ngModel]="obj.description" (ngModelChange)="updateObject(obj.id, { description: $event })"></textarea>
-
-                <label class="field" style="margin-top: 0.7rem">Prompt</label>
-                <textarea rows="3" [ngModel]="obj.prompt" (ngModelChange)="updateObject(obj.id, { prompt: $event })"></textarea>
-
-                @if (assetForObject(obj); as a) {
-                  <div class="row" style="margin-top: 0.7rem; gap: 0.5rem">
-                    <div class="asset-thumb" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'"></div>
-                    <div style="flex: 1; min-width: 0">
-                      <div style="font-size: 0.85rem; font-weight: 600">{{ a.name }}</div>
-                      <div class="muted" style="font-size: 0.74rem">{{ a.provider }} · {{ a.model }}</div>
+                  </header>
+                  @if (assetForObject(o); as a) {
+                    <div class="layer-thumb" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'">
+                      @if (a.type === 'image') {
+                        <button class="edit-img-btn" type="button" title="Edit image" (click)="$event.stopPropagation(); editObjectAsset(a, o.name)">
+                          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                        </button>
+                      }
                     </div>
-                    <button class="iconbtn sm" (click)="updateObject(obj.id, { assetId: undefined })" title="Detach asset">×</button>
+                  } @else {
+                    <div class="layer-thumb">
+                      <div class="layer-thumb-empty">No asset yet</div>
+                    </div>
+                  }
+                  <textarea
+                    rows="2"
+                    [ngModel]="o.prompt"
+                    (ngModelChange)="updateObject(o.id, { prompt: $event })"
+                    (click)="$event.stopPropagation()"
+                    placeholder="prompt…"
+                  ></textarea>
+                  <div class="layer-actions" (click)="$event.stopPropagation()">
+                    <button class="btn ghost sm" (click)="regenerate(o)" title="Regenerate">↻</button>
+                    <button class="btn sm" (click)="openAssetPicker({ kind: 'object', objectId: o.id })" title="Replace">📁</button>
+                    <button class="btn sm" (click)="toggleLock(o)" [title]="o.locked ? 'Unlock' : 'Lock'">{{ o.locked ? '🔓' : '🔒' }}</button>
+                    <button class="btn ghost sm" (click)="duplicateObject(o)" title="Duplicate">📋</button>
+                    <button class="btn danger sm" (click)="removeObject(o.id)" title="Remove">🗑</button>
                   </div>
-                }
-
-                <div class="action-grid">
-                  <button class="action" (click)="regenerate(obj)">
-                    <span class="action-icon">↻</span><span>Regenerate</span>
-                  </button>
-                  <button class="action" (click)="askAiToImprove(obj)">
-                    <span class="action-icon">🪄</span><span>Ask AI to improve</span>
-                  </button>
-                  <button class="action" (click)="openAssetPicker({ kind: 'object', objectId: obj.id })">
-                    <span class="action-icon">📁</span><span>Replace from assets</span>
-                  </button>
-                  <button class="action" (click)="toggleLock(obj)">
-                    <span class="action-icon">{{ obj.locked ? '🔓' : '🔒' }}</span>
-                    <span>{{ obj.locked ? 'Unlock' : 'Lock' }}</span>
-                  </button>
-                  <button class="action" (click)="duplicateObject(obj)">
-                    <span class="action-icon">📋</span><span>Duplicate</span>
-                  </button>
-                  <button class="action danger" (click)="removeObject(obj.id)">
-                    <span class="action-icon">🗑</span><span>Remove</span>
-                  </button>
-                </div>
-              } @else {
-                <div class="empty-inspector">
-                  <div style="font-size: 1.6rem">🎯</div>
-                  <div style="font-family: var(--font-display); font-weight: 600">Select an object</div>
-                  <p class="muted" style="font-size: 0.82rem">Click any object on the preview or in the list to edit it.</p>
-                </div>
+                </article>
               }
 
-              <div class="divider"></div>
+              <button class="layer-add" type="button" (click)="addObject()">
+                <span style="font-size: 1.6rem">+</span>
+                <strong style="font-size: 0.92rem">Add visual layer</strong>
+                <span class="muted" style="font-size: 0.72rem">character · prop · background · effect · subtitle</span>
+              </button>
+            </div>
+          </section>
 
-              <div class="section-title">Cost estimate</div>
-              <div class="cost-bar">
-                <div class="cost-segments">
-                  <div class="cost-seg" style="background: var(--neon-violet); flex: 3" title="Video"></div>
-                  <div class="cost-seg" style="background: var(--neon-cyan); flex: 1" title="Image"></div>
-                  <div class="cost-seg" style="background: var(--neon-green); flex: 1.2" title="Audio"></div>
-                </div>
-                <div class="row" style="justify-content: space-between; margin-top: 0.4rem; font-size: 0.76rem">
-                  <span class="muted">Estimated</span>
-                  <span class="mono"><strong>{{ s.costEstimate ?? 0 }}</strong> credits</span>
-                </div>
-              </div>
-
-              <div class="divider"></div>
-              <div class="section-title">Continuity</div>
-              <div class="check-row">
-                <input type="checkbox" [ngModel]="s.continuity.usePreviousFinalFrame" (ngModelChange)="updateContinuity('usePreviousFinalFrame', $event)"/>
-                <div>
-                  <div style="font-weight: 600; font-size: 0.86rem">Use previous final frame</div>
-                  <div class="muted" style="font-size: 0.74rem">Enforces visual continuity</div>
+          <section class="card scene-settings">
+            <div class="grid-2" style="gap: 1.2rem">
+              <div>
+                <div class="section-title">Cost estimate</div>
+                <div class="cost-bar">
+                  <div class="cost-segments">
+                    <div class="cost-seg" style="background: var(--neon-violet); flex: 3" title="Video"></div>
+                    <div class="cost-seg" style="background: var(--neon-cyan); flex: 1" title="Image"></div>
+                    <div class="cost-seg" style="background: var(--neon-green); flex: 1.2" title="Audio"></div>
+                  </div>
+                  <div class="row" style="justify-content: space-between; margin-top: 0.4rem; font-size: 0.76rem">
+                    <span class="muted">Estimated</span>
+                    <span class="mono"><strong>{{ s.costEstimate ?? 0 }}</strong> credits</span>
+                  </div>
                 </div>
               </div>
-              <div class="check-row">
-                <input type="checkbox" [ngModel]="s.continuity.exportFinalFrameForNextScene" (ngModelChange)="updateContinuity('exportFinalFrameForNextScene', $event)"/>
-                <div>
-                  <div style="font-weight: 600; font-size: 0.86rem">Export final frame</div>
-                  <div class="muted" style="font-size: 0.74rem">For next scene's input</div>
+              <div>
+                <div class="section-title">Continuity</div>
+                <div class="check-row">
+                  <input type="checkbox" [ngModel]="s.continuity.usePreviousFinalFrame" (ngModelChange)="updateContinuity('usePreviousFinalFrame', $event)"/>
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.86rem">Use previous final frame</div>
+                    <div class="muted" style="font-size: 0.74rem">Enforces visual continuity</div>
+                  </div>
+                </div>
+                <div class="check-row">
+                  <input type="checkbox" [ngModel]="s.continuity.exportFinalFrameForNextScene" (ngModelChange)="updateContinuity('exportFinalFrameForNextScene', $event)"/>
+                  <div>
+                    <div style="font-weight: 600; font-size: 0.86rem">Export final frame</div>
+                    <div class="muted" style="font-size: 0.74rem">For next scene's input</div>
+                  </div>
                 </div>
               </div>
-            </aside>
-          </div>
+            </div>
+          </section>
 
           <section class="versions card">
             <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
@@ -451,6 +626,13 @@ export class SceneWorkspaceComponent {
   private readonly projectsService = inject(ProjectsService);
   protected readonly assets = inject(AssetsService);
   protected readonly jobs = inject(JobsService);
+  private readonly editorBridge = inject(ImageEditorBridgeService);
+  private readonly audioBridge = inject(AudioEditorBridgeService);
+  private readonly modelsSrv = inject(ModelsService);
+
+  private modelsForCapability(cap: 'voice_clone' | 'music_generation' | 'audio_generation') {
+    return this.modelsSrv.models().filter((m) => m.capability === cap);
+  }
 
   protected readonly project = signal<CreativeContract | undefined>(undefined);
   protected readonly scene = signal<Scene | undefined>(undefined);
@@ -463,7 +645,7 @@ export class SceneWorkspaceComponent {
   protected readonly compareLeftId = signal<string | null>(null);
   protected readonly compareRightId = signal<string | null>(null);
   protected readonly confirmDelete = signal(false);
-  protected readonly isPreparing = signal(false);
+  protected readonly draftSaving = signal(false);
 
   protected readonly keyframeSlots: { which: 'startFrame' | 'endFrame'; label: string; icon: string }[] = [
     { which: 'startFrame', label: 'Start frame', icon: '◧' },
@@ -474,6 +656,54 @@ export class SceneWorkspaceComponent {
     const id = this.selectedObjectId();
     return this.scene()?.objects.find((o) => o.id === id);
   });
+
+  /** Objects that show up in the "Visual layers" panel. Audio types
+   *  (music / sfx / voice) get dedicated panels and are filtered out here. */
+  protected readonly visualObjects = computed(() => {
+    return this.scene()?.objects.filter((o) => !AUDIO_OBJECT_TYPES.has(o.type)) ?? [];
+  });
+
+  protected readonly voiceModels = computed(() =>
+    this.modelsForCapability('voice_clone'),
+  );
+  protected readonly musicModels = computed(() =>
+    this.modelsForCapability('music_generation'),
+  );
+
+  /** True only when the backend has actually rendered this scene's video. */
+  protected readonly hasRenderedVideo = computed(() => {
+    const s = this.scene();
+    return s?.review.status === 'completed' || s?.review.status === 'approved';
+  });
+
+  protected previewStateLabel(s: Scene): string {
+    return {
+      draft: 'Scene not prepared yet',
+      prepared: 'Ready to generate',
+      waiting_for_user: 'Needs your attention',
+      generating: 'Rendering scene video',
+      failed: 'Generation failed',
+      completed: 'Generated',
+      approved: 'Approved',
+    }[s.review.status] ?? s.review.status;
+  }
+
+  protected previewStateHelp(s: Scene): string {
+    return {
+      draft: 'Edit the layers below — start frame, prompt, audio, narration — then click Generate scene.',
+      prepared: 'Every layer is ready. Click Generate scene to render the video.',
+      waiting_for_user: 'Resolve the flagged layer below, then re-generate.',
+      generating: 'The backend is composing the video from the layers below. This usually takes 1–3 minutes.',
+      failed: 'The render failed. Edit any layer and retry.',
+      completed: 'The scene video is ready — approve it or edit a layer to re-render.',
+      approved: 'This scene is locked and will be used in the final film stitch.',
+    }[s.review.status] ?? '';
+  }
+
+  protected layerCount(s: Scene): number {
+    // start + end + prompt + music + sfx + narration + visual layers
+    return 6 + (s.objects.filter((o) => !AUDIO_OBJECT_TYPES.has(o.type)).length);
+  }
 
   protected readonly previewImage = computed(() => {
     const s = this.scene();
@@ -549,6 +779,12 @@ export class SceneWorkspaceComponent {
     if (target.kind === 'startFrame' || target.kind === 'endFrame') {
       return this.assets.assets().filter((a) => a.type === 'image');
     }
+    if (target.kind === 'backgroundMusic') {
+      return this.assets.assets().filter((a) => a.type === 'music' || a.type === 'audio');
+    }
+    if (target.kind === 'narrationVoice') {
+      return this.assets.assets().filter((a) => a.type === 'voice' || a.type === 'audio');
+    }
     const obj = this.scene()?.objects.find((o) => o.id === target.objectId);
     if (!obj) return this.assets.assets();
     const allowedByType: Record<string, Asset['type'][]> = {
@@ -579,8 +815,14 @@ export class SceneWorkspaceComponent {
       if (!projectId || !sceneId) return;
       this.projectsService.get(projectId).subscribe((p) => this.project.set(p));
       this.scenesService.get(projectId, sceneId).subscribe((s) => {
-        this.scene.set(s);
-        if (s && s.objects.length > 0) this.selectedObjectId.set(s.objects[0].id);
+        if (!s) { this.scene.set(s); return; }
+        const prepared = this.autoPrepareScene(s);
+        this.scene.set(prepared);
+        if (prepared.objects.length > 0) this.selectedObjectId.set(prepared.objects[0].id);
+        if (prepared !== s) {
+          // Persist the auto-filled state so refresh keeps the same kit.
+          this.scenesService.updateScene(projectId, prepared).subscribe();
+        }
       });
       this.scenesService.versions(sceneId).subscribe((v) => {
         this.versions.set(v);
@@ -742,6 +984,74 @@ export class SceneWorkspaceComponent {
     if (!s) return;
     this.updateSceneField('continuity', { ...s.continuity, [key]: value });
   }
+
+  protected updateBackgroundMusic(patch: Partial<Scene['audio']['backgroundMusic']>) {
+    const s = this.scene();
+    if (!s) return;
+    const next: Scene['audio'] = {
+      ...s.audio,
+      backgroundMusic: { ...s.audio.backgroundMusic, ...patch },
+    };
+    this.updateSceneField('audio', next);
+  }
+
+  protected addSoundEffect(value: string) {
+    const v = value.trim();
+    if (!v) return;
+    const s = this.scene();
+    if (!s) return;
+    if (s.audio.soundEffects.includes(v)) return;
+    const next: Scene['audio'] = {
+      ...s.audio,
+      soundEffects: [...s.audio.soundEffects, v],
+    };
+    this.updateSceneField('audio', next);
+  }
+
+  protected removeSoundEffect(value: string) {
+    const s = this.scene();
+    if (!s) return;
+    const next: Scene['audio'] = {
+      ...s.audio,
+      soundEffects: s.audio.soundEffects.filter((x) => x !== value),
+    };
+    this.updateSceneField('audio', next);
+  }
+
+  protected updateNarration(patch: Partial<Scene['narration']>) {
+    const s = this.scene();
+    if (!s) return;
+    this.updateSceneField('narration', { ...s.narration, ...patch });
+  }
+
+  protected updateSubtitles(patch: Partial<Scene['subtitles']>) {
+    const s = this.scene();
+    if (!s) return;
+    this.updateSceneField('subtitles', { ...s.subtitles, ...patch });
+  }
+
+  protected subtitleText(s: Scene): string {
+    return s.subtitles.text ?? s.narration.text ?? '';
+  }
+
+  protected globalSubtitleFont(): string {
+    const p = this.project();
+    return p?.creativeDirection.subtitleStyle?.fontFamily || p?.creativeDirection.fonts.subtitle || 'Inter';
+  }
+
+  protected globalSubtitleColor(): string {
+    return this.project()?.creativeDirection.subtitleStyle?.color || '#FFFFFF';
+  }
+
+  protected narrationVoiceLabel(s: Scene): string {
+    const ref = s.narration.voiceRef;
+    if (!ref) return '';
+    const asset = this.assets.get(ref);
+    if (asset) return `${asset.name} (asset)`;
+    const model = this.modelsSrv.models().find((m) => m.id === ref);
+    if (model) return `${model.provider} · ${model.name}`;
+    return ref;
+  }
   protected updateKeyframe(which: 'startFrame' | 'endFrame', patch: Partial<SceneKeyframe>) {
     const s = this.scene();
     if (!s) return;
@@ -764,22 +1074,116 @@ export class SceneWorkspaceComponent {
       this.updateKeyframe(which, { assetId: asset.id, description });
     });
   }
-  protected prepareScene() {
-    const p = this.project();
-    const s = this.scene();
-    if (!p || !s) return;
-    this.isPreparing.set(true);
-    this.updateSceneField('review', { ...s.review, status: 'prepared' });
-    this.jobs.enqueue({
-      projectId: p.id,
-      sceneId: s.id,
-      provider: p.models.image.provider,
-      model: p.models.image.model,
-      costEstimate: 2,
-      outputAssetIds: [],
-    }).subscribe();
-    if (!s.startFrame?.assetId) this.generateKeyframe('startFrame');
-    setTimeout(() => this.isPreparing.set(false), 1500);
+  /**
+   * Stand-in for what the backend would do when the contract says
+   * "scene needs to be prepared": fill every missing layer (start/end image,
+   * music, narration text + voice, sound effects, visual-layer assets) with
+   * mock assets from the library so the user lands on a scene with everything
+   * already suggested. Returns the same scene reference when nothing was
+   * missing — otherwise a new patched scene.
+   */
+  private autoPrepareScene(s: Scene): Scene {
+    const imageAssets = this.assets.assets().filter((a) => a.type === 'image');
+    const musicAssets = this.assets.assets().filter((a) => a.type === 'music' || a.type === 'audio');
+    const voiceAssets = this.assets.assets().filter((a) => a.type === 'voice');
+    if (imageAssets.length === 0) return s;
+
+    const pickImage = (seed: number) => imageAssets[seed % imageAssets.length];
+    let next = s;
+    let touched = false;
+    const seed = s.objects.length + s.title.length;
+
+    // Start frame
+    if (!next.startFrame?.assetId) {
+      next = {
+        ...next,
+        startFrame: {
+          mode: 'generate',
+          description: next.startFrame?.description || `Opening shot of "${next.title}"`,
+          prompt: next.startFrame?.prompt || next.objective,
+          assetId: pickImage(seed).id,
+        },
+      };
+      touched = true;
+    }
+    // End frame
+    if (!next.endFrame?.assetId) {
+      next = {
+        ...next,
+        endFrame: {
+          mode: 'generate',
+          description: next.endFrame?.description || `Closing shot of "${next.title}"`,
+          prompt: next.endFrame?.prompt || next.objective,
+          assetId: pickImage(seed + 1).id,
+        },
+      };
+      touched = true;
+    }
+
+    // Background music asset
+    if (!next.audio.backgroundMusic.assetId && musicAssets.length > 0) {
+      next = {
+        ...next,
+        audio: {
+          ...next.audio,
+          backgroundMusic: {
+            ...next.audio.backgroundMusic,
+            assetId: musicAssets[seed % musicAssets.length].id,
+            genre: next.audio.backgroundMusic.genre || 'cinematic ambient',
+            tempo: next.audio.backgroundMusic.tempo || 'slow',
+          },
+        },
+      };
+      touched = true;
+    }
+
+    // Sound effects default
+    if (next.audio.soundEffects.length === 0) {
+      next = {
+        ...next,
+        audio: {
+          ...next.audio,
+          soundEffects: ['ambient room tone', 'subtle wind'],
+        },
+      };
+      touched = true;
+    }
+
+    // Narration text + voice
+    if (!next.narration.text.trim() || !next.narration.voiceRef) {
+      next = {
+        ...next,
+        narration: {
+          text: next.narration.text || `Voice-over for "${next.title}".`,
+          voiceRef: next.narration.voiceRef || voiceAssets[0]?.id || '',
+        },
+      };
+      touched = true;
+    }
+
+    // Visual-layer assets — every non-audio object gets a thumbnail + ready
+    if (next.objects.some((o) => !AUDIO_OBJECT_TYPES.has(o.type) && (!o.assetId || o.status === 'pending'))) {
+      next = {
+        ...next,
+        objects: next.objects.map((o, i) => {
+          if (AUDIO_OBJECT_TYPES.has(o.type)) return o;
+          if (o.assetId && o.status !== 'pending') return o;
+          return {
+            ...o,
+            assetId: o.assetId || pickImage(seed + 2 + i).id,
+            status: 'ready' as const,
+          };
+        }),
+      };
+      touched = true;
+    }
+
+    // Bump status to 'prepared' if it was still draft
+    if (touched && next.review.status === 'draft') {
+      next = { ...next, review: { ...next.review, status: 'prepared' } };
+    }
+
+    return touched ? next : s;
   }
   protected generateScene() {
     const p = this.project();
@@ -847,6 +1251,10 @@ export class SceneWorkspaceComponent {
     if (!target) return;
     if (target.kind === 'object') {
       this.updateObject(target.objectId, { assetId: a.id, status: 'ready' });
+    } else if (target.kind === 'backgroundMusic') {
+      this.updateBackgroundMusic({ assetId: a.id, mode: 'asset' });
+    } else if (target.kind === 'narrationVoice') {
+      this.updateNarration({ voiceRef: a.id });
     } else {
       this.updateKeyframe(target.kind, { assetId: a.id, description: a.prompt || a.name });
     }
@@ -860,6 +1268,21 @@ export class SceneWorkspaceComponent {
 
   protected confirmDeleteScene() {
     this.confirmDelete.set(true);
+  }
+
+  protected saveDraft() {
+    const p = this.project();
+    const s = this.scene();
+    if (!p || !s || this.draftSaving()) return;
+    this.draftSaving.set(true);
+    const route = `/projects/${p.id}/scenes/${s.id}`;
+    this.projectsService.saveDraft(p.id, route).subscribe({
+      next: () => {
+        this.draftSaving.set(false);
+        this.router.navigate(['/drafts']);
+      },
+      error: () => this.draftSaving.set(false),
+    });
   }
   protected deleteScene() {
     const p = this.project();
@@ -878,5 +1301,93 @@ export class SceneWorkspaceComponent {
 
   protected assetForObject(o: SceneObject) {
     return o.assetId ? this.assets.get(o.assetId) : undefined;
+  }
+
+  protected editObjectAsset(a: Asset, objectName: string) {
+    this.editorBridge.open({
+      sourceUri: a.uri,
+      contextLabel: `Scene object · ${objectName || a.name}`,
+      onApply: (newUri) => {
+        this.assets.update(a.id, { uri: newUri, thumbnail: newUri });
+      },
+    });
+  }
+
+  /** The voice asset attached to the narration, if voiceRef is an asset ID. */
+  protected narrationAsset(s: Scene): Asset | undefined {
+    const ref = s.narration?.voiceRef;
+    if (!ref) return undefined;
+    return this.assets.get(ref);
+  }
+
+  protected editMusic() {
+    const s = this.scene();
+    if (!s) return;
+    const aid = s.audio.backgroundMusic.assetId;
+    if (!aid) return;
+    const asset = this.assets.get(aid);
+    if (!asset) return;
+    this.audioBridge.open({
+      sourceUri: asset.uri,
+      sourceName: asset.name,
+      durationSec: asset.durationSec,
+      contextLabel: `Scene "${s.title || 'untitled'}" · background music`,
+      onApply: (newUri, dur) => {
+        // Create a new audio asset for the edited version and attach it
+        this.assets
+          .generate({
+            type: 'audio',
+            name: `${asset.name.replace(/\.[a-z0-9]+$/i, '')}-edited.mp3`,
+            prompt: '(edited from audio editor)',
+            provider: 'audio-editor',
+            model: 'mock-edit',
+          })
+          .subscribe((newAsset) => {
+            // Patch the new asset's uri + duration to match the edit
+            this.assets.update(newAsset.id, { uri: newUri, durationSec: dur ?? asset.durationSec });
+            this.updateBackgroundMusic({ assetId: newAsset.id });
+          });
+      },
+    });
+  }
+
+  protected editNarration() {
+    const s = this.scene();
+    if (!s) return;
+    const asset = this.narrationAsset(s);
+    if (!asset) return;
+    this.audioBridge.open({
+      sourceUri: asset.uri,
+      sourceName: asset.name,
+      durationSec: asset.durationSec,
+      contextLabel: `Scene "${s.title || 'untitled'}" · narration`,
+      onApply: (newUri, dur) => {
+        this.assets
+          .generate({
+            type: 'audio',
+            name: `${asset.name.replace(/\.[a-z0-9]+$/i, '')}-edited.mp3`,
+            prompt: '(narration edit)',
+            provider: 'audio-editor',
+            model: 'mock-edit',
+          })
+          .subscribe((newAsset) => {
+            this.assets.update(newAsset.id, { uri: newUri, durationSec: dur ?? asset.durationSec });
+            this.updateNarration({ voiceRef: newAsset.id });
+          });
+      },
+    });
+  }
+
+  protected editKeyframe(s: Scene, which: 'startFrame' | 'endFrame', label: string) {
+    const kf = this.keyframeFor(s, which);
+    const asset = kf?.assetId ? this.assets.get(kf.assetId) : undefined;
+    if (!asset) return;
+    this.editorBridge.open({
+      sourceUri: asset.uri,
+      contextLabel: `Scene "${s.title || 'untitled'}" · ${label}`,
+      onApply: (newUri) => {
+        this.assets.update(asset.id, { uri: newUri, thumbnail: newUri });
+      },
+    });
   }
 }

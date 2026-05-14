@@ -14,11 +14,26 @@ import { switchMap } from 'rxjs/operators';
 import { ProjectsService } from '../../core/services/projects.service';
 import { AssetsService } from '../../core/services/assets.service';
 import { CharactersService } from '../../core/services/characters.service';
-import { ScenesService } from '../../core/services/scenes.service';
 import { ModelsService } from '../../core/services/models.service';
 import { ContractExportService } from '../../core/services/contract-export.service';
+import { ImageEligibilityService } from '../../core/services/image-eligibility.service';
+import { ImageEditorBridgeService } from '../../core/services/image-editor-bridge.service';
+import {
+  ATMOSPHERE_OPTIONS,
+  CAMERA_ANGLES,
+  CAMERA_MOVEMENTS,
+  COLOR_GRADES,
+  DEPTH_OF_FIELD,
+  FILM_STOCKS,
+  GRAIN_OPTIONS,
+  LENS_CHARACTERISTICS,
+  LENS_TYPES,
+  LIGHTING_OPTIONS,
+  SHOT_TYPES,
+  STYLE_REFERENCES,
+  TIME_OF_DAY,
+} from '../../core/data/cinematography-options';
 import { MoodboardService, MoodboardSuggestion } from '../../core/services/moodboard.service';
-import { StoryboardService, StoryboardSuggestion } from '../../core/services/storyboard.service';
 import {
   AdAudience,
   AdBeatEntry,
@@ -41,6 +56,7 @@ import {
   Character,
   CharacterProfile,
   CharacterVoice,
+  Cinematography,
   CreativeContract,
   CreativeDirection,
   MoodboardReference,
@@ -54,16 +70,15 @@ import {
   ShortCtaAction,
   ShortEmojiDensity,
   ShortVideoConfig,
-  StoryboardPanel,
 } from '../../core/models/contract.model';
 
 type StepKey =
   | 'goal'
   | 'script'
   | 'style'
+  | 'cinematography'
   | 'characters'
   | 'assets'
-  | 'scenes'
   | 'review'
   // YouTube Short-specific
   | 'yt_hook'
@@ -89,9 +104,9 @@ const DEFAULT_STEPS: WizardStep[] = [
   { key: 'goal', label: 'Goal', sub: 'Pick the kind of video' },
   { key: 'script', label: 'Script & structure', sub: 'LLM, duration, pacing' },
   { key: 'style', label: 'Global style', sub: 'Mood, palette, fonts' },
+  { key: 'cinematography', label: 'Cinematic direction', sub: 'Cues AI video models actually respond to' },
   { key: 'characters', label: 'Characters', sub: 'Reusable avatars & voices' },
   { key: 'assets', label: 'Assets', sub: 'Reference materials' },
-  { key: 'scenes', label: 'Scenes', sub: 'Plan & order' },
   { key: 'review', label: 'Review & generate', sub: 'YAML / JSON' },
 ];
 
@@ -100,6 +115,7 @@ const YT_SHORT_STEPS: WizardStep[] = [
   { key: 'yt_hook', label: 'Hook & topic', sub: 'First 3s + payoff' },
   { key: 'yt_audio', label: 'Trending audio', sub: 'Pick or generate, snap cuts' },
   { key: 'yt_style', label: 'Vertical style', sub: '9:16 captions, safe zone' },
+  { key: 'cinematography', label: 'Cinematic direction', sub: 'Cues AI video models actually respond to' },
   { key: 'characters', label: 'Cast', sub: 'Optional — creator or character' },
   { key: 'yt_beats', label: 'Beat storyboard', sub: 'Micro-scenes, 1–3s each' },
   { key: 'yt_cta', label: 'CTA & loop', sub: 'End card + loop back' },
@@ -112,6 +128,7 @@ const AD_STEPS: WizardStep[] = [
   { key: 'ad_product', label: 'Product & offer', sub: 'USP, benefits, promo' },
   { key: 'ad_audience', label: 'Audience & placement', sub: 'Who, where, length' },
   { key: 'ad_visual', label: 'Visual & compliance', sub: 'Moodboard + disclaimers' },
+  { key: 'cinematography', label: 'Cinematic direction', sub: 'Cues AI video models actually respond to' },
   { key: 'characters', label: 'Cast', sub: 'Optional — talent or models' },
   { key: 'ad_structure', label: 'Ad structure', sub: 'Hook → Problem → CTA' },
   { key: 'ad_variants', label: 'A/B variants', sub: 'Test multiple cuts' },
@@ -260,12 +277,9 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
             </div>
           </div>
           <div class="row">
-            <button class="btn ghost sm" (click)="togglePreview()">
-              <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 10s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5Z"/>
-                <circle cx="10" cy="10" r="2.2"/>
-              </svg>
-              {{ previewOpen() ? 'Hide' : 'Show' }} contract
+            <button class="btn ghost sm" (click)="saveDraft()" [disabled]="draftSaving()">
+              @if (draftSaving()) { <span class="loader"></span> Saving… }
+              @else { 💾 Save draft }
             </button>
             <button class="btn cool" (click)="generateContract()">
               <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v14M5 3l5 5-5 5M5 17l5-5-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -274,7 +288,7 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
           </div>
         </header>
 
-        <div class="wiz-body" [class.with-preview]="previewOpen()">
+        <div class="wiz-body">
           <aside class="steps">
             @for (s of steps(); track s.key; let i = $index) {
               <button
@@ -521,7 +535,11 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                   <div class="moodboard-grid">
                     @for (r of p.creativeDirection.references; track r.id) {
                       <div class="mb-tile" [class.locked]="r.locked">
-                        <div class="mb-thumb" [style.background-image]="'url(' + (r.thumbnail || r.uri) + ')'"></div>
+                        <div class="mb-thumb" [style.background-image]="'url(' + (r.thumbnail || r.uri) + ')'">
+                          <button class="edit-img-btn" type="button" title="Edit image" (click)="editMoodboardRef(r)">
+                            <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                          </button>
+                        </div>
                         <div class="mb-body">
                           <input
                             class="mb-tag-input"
@@ -537,6 +555,374 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                             <button class="iconbtn sm" title="Remove" (click)="removeMoodboardReference(r.id)">×</button>
                           </div>
                         </div>
+                      </div>
+                    }
+                  </div>
+                }
+
+                <div class="section-title" style="margin-top: 1.6rem">Subtitles</div>
+                <p class="muted" style="font-size: 0.82rem">
+                  Project-wide defaults. Each scene falls back to its narration text unless you override per scene.
+                </p>
+                @let st = p.creativeDirection.subtitleStyle ?? defaultSubtitleStyle();
+                <label class="check-row" style="margin-top: 0.6rem">
+                  <input
+                    type="checkbox"
+                    [ngModel]="st.enabledByDefault"
+                    (ngModelChange)="updateSubtitleStyle('enabledByDefault', $event)"
+                  />
+                  <div>
+                    <div class="check-title">Enabled by default</div>
+                    <div class="muted" style="font-size: 0.78rem">New scenes start with subtitles on.</div>
+                  </div>
+                </label>
+                <div class="grid-3" style="margin-top: 0.7rem">
+                  <div>
+                    <label class="field">Font</label>
+                    <input
+                      [ngModel]="st.fontFamily"
+                      (ngModelChange)="updateSubtitleStyle('fontFamily', $event)"
+                      placeholder="e.g. Inter, Roboto, Montserrat"
+                    />
+                  </div>
+                  <div>
+                    <label class="field">Weight</label>
+                    <select
+                      [ngModel]="st.fontWeight"
+                      (ngModelChange)="updateSubtitleStyle('fontWeight', $event)"
+                    >
+                      <option value="regular">Regular</option>
+                      <option value="medium">Medium</option>
+                      <option value="semibold">Semibold</option>
+                      <option value="bold">Bold</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="field">Size (px)</label>
+                    <input
+                      type="number"
+                      min="10"
+                      max="120"
+                      [ngModel]="st.fontSizePx"
+                      (ngModelChange)="updateSubtitleStyle('fontSizePx', +$event)"
+                    />
+                  </div>
+                </div>
+                <div class="grid-3" style="margin-top: 0.5rem">
+                  <div>
+                    <label class="field">Text color</label>
+                    <input
+                      type="color"
+                      [ngModel]="st.color"
+                      (ngModelChange)="updateSubtitleStyle('color', $event)"
+                    />
+                  </div>
+                  <div>
+                    <label class="field">Background</label>
+                    <input
+                      [ngModel]="st.backgroundColor"
+                      (ngModelChange)="updateSubtitleStyle('backgroundColor', $event)"
+                      placeholder="rgba(0,0,0,0.55)"
+                    />
+                  </div>
+                  <div>
+                    <label class="field">Position</label>
+                    <select
+                      [ngModel]="st.position"
+                      (ngModelChange)="updateSubtitleStyle('position', $event)"
+                    >
+                      <option value="top">Top</option>
+                      <option value="middle">Middle</option>
+                      <option value="bottom">Bottom</option>
+                    </select>
+                  </div>
+                </div>
+                <div style="margin-top: 0.5rem">
+                  <label class="field">Default style</label>
+                  <select
+                    [ngModel]="st.style"
+                    (ngModelChange)="updateSubtitleStyle('style', $event)"
+                  >
+                    <option value="clean lower third">Clean lower third</option>
+                    <option value="karaoke">Karaoke (word-by-word)</option>
+                    <option value="bold caption">Bold caption</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="documentary">Documentary</option>
+                  </select>
+                </div>
+
+                <div
+                  class="subtitle-preview"
+                  [style.font-family]="st.fontFamily"
+                  [style.font-weight]="weightCss(st.fontWeight)"
+                  [style.font-size.px]="st.fontSizePx"
+                  [style.color]="st.color"
+                  [style.background]="st.backgroundColor"
+                  [style.align-self]="st.position === 'top' ? 'flex-start' : st.position === 'middle' ? 'center' : 'flex-end'"
+                  style="margin-top: 0.9rem; padding: 0.5rem 0.9rem; border-radius: 6px; display: inline-block"
+                >
+                  Sample subtitle — {{ st.style }}
+                </div>
+              }
+
+              @case ('cinematography') {
+                <div class="row" style="justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.6rem">
+                  <div>
+                    <h2>Cinematic direction <span class="chip cyan" style="font-size: 0.7rem; vertical-align: middle">AI-responsive only</span></h2>
+                    <p class="muted" style="max-width: 70ch">
+                      Every option below is a cue that AI video models (Sora, Veo, Runway, Kling, Luma, Pika) demonstrably change the output for.
+                      Style-only tags (specific camera bodies, exact f-stops, fps, aspect ratio) are excluded — fps and aspect ratio live in the Output step.
+                      Stack <strong>4–7 cues</strong> for the strongest result.
+                    </p>
+                  </div>
+                  <div class="row" style="gap: 0.4rem">
+                    <label class="check-row" style="margin: 0">
+                      <input
+                        type="checkbox"
+                        [ngModel]="p.cinematography?.enabled ?? false"
+                        (ngModelChange)="ensureCinematography(); updateCinema('enabled', $event)"
+                      />
+                      <div>
+                        <div class="check-title">Enable</div>
+                      </div>
+                    </label>
+                    @if (p.cinematography?.enabled) {
+                      <button class="btn ghost sm" type="button" (click)="resetCinematography()">Reset</button>
+                    }
+                  </div>
+                </div>
+
+                @if (!p.cinematography?.enabled) {
+                  <div class="empty-state" style="margin-top: 0.9rem; padding: 1.6rem; text-align: center">
+                    <div class="empty-art" style="font-size: 1.6rem">🎬</div>
+                    <p class="muted" style="font-size: 0.86rem; margin-top: 0.4rem">
+                      Cinematic direction is off. Toggle <strong>Enable</strong> to specify the look — or skip this step to let the AI choose.
+                    </p>
+                  </div>
+                } @else {
+                  <div class="grid-2" style="margin-top: 1.3rem">
+                    <div>
+                      <div class="section-title" style="margin: 0">1. Lens type</div>
+                      <p class="muted" style="font-size: 0.76rem; margin-top: 0.2rem">Models map these to perspective + framing. Specific mm numbers (35 vs 50) are weakly differentiated, so we use broad buckets.</p>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (l of cinemaLensTypes; track l.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="p.cinematography?.lensType === l.value"
+                            (click)="updateCinema('lensType', p.cinematography?.lensType === l.value ? '' : l.value)"
+                            [title]="l.hint"
+                          >{{ l.label }}</button>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <div class="section-title" style="margin: 0">2. Depth of field</div>
+                      <p class="muted" style="font-size: 0.76rem; margin-top: 0.2rem">Drives the blur look directly — much stronger signal than picking an exact f-stop.</p>
+                      <select
+                        style="margin-top: 0.4rem"
+                        [ngModel]="p.cinematography?.depthOfField ?? ''"
+                        (ngModelChange)="updateCinema('depthOfField', $event)"
+                      >
+                        <option value="">— none —</option>
+                        @for (d of cinemaDepthOfField; track d.value) {
+                          <option [value]="d.value">{{ d.label }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="section-title" style="margin-top: 1.2rem">3. Lens character</div>
+                  <p class="muted" style="font-size: 0.76rem; margin-top: 0.2rem">Only entries with a visible artefact — anamorphic streaks, tilt-shift miniature, halation glow, etc.</p>
+                  <div class="chip-grid compact" style="margin-top: 0.4rem">
+                    @for (l of cinemaLensCharacter; track l.value) {
+                      <button
+                        type="button"
+                        class="opt-chip sm"
+                        [class.active]="isCinemaChipActive('lensCharacter', l.value)"
+                        (click)="toggleCinemaChip('lensCharacter', l.value)"
+                        [title]="l.hint || ''"
+                      >{{ l.value }}</button>
+                    }
+                  </div>
+
+                  <div class="grid-2" style="margin-top: 1.2rem">
+                    <div>
+                      <div class="section-title" style="margin: 0">4. Shot type</div>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (s of cinemaShotTypes; track s.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="p.cinematography?.shotType === s.value"
+                            (click)="updateCinema('shotType', p.cinematography?.shotType === s.value ? undefined : s.value)"
+                          >{{ s.value }}</button>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <div class="section-title" style="margin: 0">5. Camera angle</div>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (a of cinemaCameraAngles; track a.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="p.cinematography?.cameraAngle === a.value"
+                            (click)="updateCinema('cameraAngle', p.cinematography?.cameraAngle === a.value ? undefined : a.value)"
+                            [title]="a.hint || ''"
+                          >{{ a.value }}</button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="section-title" style="margin-top: 1.2rem">6. Camera movement</div>
+                  <div class="chip-grid compact" style="margin-top: 0.4rem">
+                    @for (m of cinemaMovements; track m.value) {
+                      <button
+                        type="button"
+                        class="opt-chip sm"
+                        [class.active]="p.cinematography?.movement === m.value"
+                        (click)="updateCinema('movement', p.cinematography?.movement === m.value ? undefined : m.value)"
+                        [title]="m.hint || ''"
+                      >{{ m.value }}</button>
+                    }
+                  </div>
+
+                  <div class="grid-2" style="margin-top: 1.2rem">
+                    <div>
+                      <div class="section-title" style="margin: 0">7. Film stock</div>
+                      <p class="muted" style="font-size: 0.76rem; margin-top: 0.2rem">Only stocks with a learned visual signature (CineStill halation, Portra warmth, etc.).</p>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (f of cinemaFilmStocks; track f.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="p.cinematography?.filmStock === f.value"
+                            (click)="updateCinema('filmStock', p.cinematography?.filmStock === f.value ? undefined : f.value)"
+                            [title]="f.hint || ''"
+                          >{{ f.value }}</button>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <div class="section-title" style="margin: 0">8. Color grade</div>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (cg of cinemaColorGrades; track cg.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="p.cinematography?.colorGrade === cg.value"
+                            (click)="updateCinema('colorGrade', p.cinematography?.colorGrade === cg.value ? undefined : cg.value)"
+                            [title]="cg.hint || ''"
+                          >{{ cg.value }}</button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="section-title" style="margin-top: 1.2rem">9. Grain & texture</div>
+                  <div class="chip-grid compact" style="margin-top: 0.4rem">
+                    @for (g of cinemaGrain; track g.value) {
+                      <button
+                        type="button"
+                        class="opt-chip sm"
+                        [class.active]="p.cinematography?.grain === g.value"
+                        (click)="updateCinema('grain', p.cinematography?.grain === g.value ? undefined : g.value)"
+                      >{{ g.value }}</button>
+                    }
+                  </div>
+
+                  <div class="section-title" style="margin-top: 1.2rem">10. Lighting</div>
+                  <div class="chip-grid compact" style="margin-top: 0.4rem">
+                    @for (l of cinemaLighting; track l.value) {
+                      <button
+                        type="button"
+                        class="opt-chip sm"
+                        [class.active]="isCinemaChipActive('lighting', l.value)"
+                        (click)="toggleCinemaChip('lighting', l.value)"
+                        [title]="l.hint || ''"
+                      >{{ l.value }}</button>
+                    }
+                  </div>
+
+                  <div class="grid-2" style="margin-top: 1.2rem">
+                    <div>
+                      <div class="section-title" style="margin: 0">11. Time of day</div>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (t of cinemaTimeOfDay; track t.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="p.cinematography?.timeOfDay === t.value"
+                            (click)="updateCinema('timeOfDay', p.cinematography?.timeOfDay === t.value ? undefined : t.value)"
+                          >{{ t.value }}</button>
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <div class="section-title" style="margin: 0">12. Atmosphere</div>
+                      <div class="chip-grid compact" style="margin-top: 0.4rem">
+                        @for (a of cinemaAtmosphere; track a.value) {
+                          <button
+                            type="button"
+                            class="opt-chip sm"
+                            [class.active]="isCinemaChipActive('atmosphere', a.value)"
+                            (click)="toggleCinemaChip('atmosphere', a.value)"
+                          >{{ a.value }}</button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="section-title" style="margin-top: 1.2rem">13. Style reference</div>
+                  <p class="muted" style="font-size: 0.76rem; margin-top: 0.2rem">Kept the most-recognised names only. Niche cinematographers have weak signal in current video models.</p>
+                  <div class="ref-groups" style="margin-top: 0.4rem">
+                    @for (g of cinemaStyleReferences; track g.group) {
+                      <div class="ref-group">
+                        <div class="ref-group-label">{{ g.group }}</div>
+                        <div class="chip-grid compact">
+                          @for (r of g.items; track r.value) {
+                            <button
+                              type="button"
+                              class="opt-chip sm"
+                              [class.active]="p.cinematography?.styleReference === r.value"
+                              (click)="updateCinema('styleReference', p.cinematography?.styleReference === r.value ? undefined : r.value)"
+                              [title]="r.hint || ''"
+                            >{{ r.value }}</button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                  <label class="field" style="margin-top: 1rem">14. Additional prompt notes</label>
+                  <textarea
+                    rows="2"
+                    [ngModel]="p.cinematography?.promptNotes ?? ''"
+                    (ngModelChange)="updateCinema('promptNotes', $event)"
+                    placeholder="e.g. soft skin tones, subtle haze in the background, no over-sharpening"
+                  ></textarea>
+
+                  <div class="snippet">
+                    <div class="row" style="justify-content: space-between; align-items: flex-start; gap: 0.6rem; flex-wrap: wrap">
+                      <div>
+                        <div class="eyebrow">AI prompt snippet</div>
+                        <p class="muted" style="font-size: 0.78rem; margin-top: 0.25rem">
+                          The orchestrator appends this phrase to every scene prompt so the AI generator follows your direction.
+                        </p>
+                      </div>
+                      <div class="row" style="gap: 0.4rem; align-items: center">
+                        <span class="chip" [class]="cinemaBudgetTone()">{{ cinemaSelectionCount() }} cue{{ cinemaSelectionCount() === 1 ? '' : 's' }}</span>
+                        <span class="chip muted">{{ cinemaPromptSnippet().length }} chars</span>
+                      </div>
+                    </div>
+                    <div class="budget-msg" [class]="'tone-' + cinemaBudgetTone()">{{ cinemaBudgetMessage() }}</div>
+                    @if (cinemaPromptSnippet()) {
+                      <pre class="snippet-pre">{{ cinemaPromptSnippet() }}</pre>
+                    } @else {
+                      <div class="muted" style="font-size: 0.82rem; margin-top: 0.4rem">
+                        Pick at least one option above to preview the snippet.
                       </div>
                     }
                   </div>
@@ -641,6 +1027,9 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                         @for (refId of c.referenceImages; track refId) {
                           @if (assets.get(refId); as a) {
                             <div class="ref-thumb" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'" [title]="a.name">
+                              <button class="edit-img-btn" type="button" title="Edit image" (click)="editAssetById(a.id, c.name)">
+                                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                              </button>
                               <button class="ref-remove" (click)="removeReference(c.id, refId)" title="Remove reference">×</button>
                               <span class="ref-name">{{ a.name }}</span>
                             </div>
@@ -804,157 +1193,14 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                   @for (a of assets.assets().slice(0, 12); track a.id) {
                     <div class="asset-mini" [style.background-image]="'url(' + (a.thumbnail || a.uri) + ')'">
                       <span class="asset-mini-tag">{{ a.type }}</span>
+                      @if (a.type === 'image') {
+                        <button class="edit-img-btn" type="button" title="Edit image" (click)="editAssetById(a.id)">
+                          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                        </button>
+                      }
                     </div>
                   }
                 </div>
-              }
-
-              @case ('scenes') {
-                <div class="row" style="justify-content: space-between; flex-wrap: wrap; gap: 0.6rem">
-                  <div>
-                    <h2>Scenes</h2>
-                    <p class="muted">Plan and order your scenes. Each scene is a fully-typed block in the contract.</p>
-                  </div>
-                  <div class="row" style="gap: 0.5rem; flex-wrap: wrap">
-                    <div class="view-toggle">
-                      <button [class.active]="scenesView() === 'list'" (click)="scenesView.set('list')">List</button>
-                      <button [class.active]="scenesView() === 'storyboard'" (click)="scenesView.set('storyboard')">Storyboard</button>
-                    </div>
-                    @if (scenesView() === 'storyboard') {
-                      <button class="btn sm" (click)="suggestStoryboard()" [disabled]="storyboardLoading() || p.scenes.length === 0">
-                        @if (storyboardLoading()) { <span class="loader"></span> Suggesting… }
-                        @else { ✨ Suggest storyboard }
-                      </button>
-                    }
-                    <button class="btn primary sm" (click)="addScene()">+ Add scene</button>
-                  </div>
-                </div>
-
-                @if (storyboardRationale() && scenesView() === 'storyboard') {
-                  <div class="moodboard-rationale" style="margin-top: 0.8rem">{{ storyboardRationale() }}</div>
-                }
-
-                @if (scenesView() === 'list') {
-                  <div class="scenes-list">
-                    @for (s of p.scenes; track s.id; let i = $index; let last = $last) {
-                      <div class="scene-row-wrap">
-                        <a class="scene-row" [routerLink]="['/projects', p.id, 'scenes', s.id]">
-                          <div class="scene-thumb" [style.background-image]="s.thumbnailUrl ? 'url(' + s.thumbnailUrl + ')' : ''">
-                            <span class="scene-num">{{ s.index + 1 }}</span>
-                          </div>
-                          <div style="flex: 1; min-width: 0">
-                            <div class="row" style="gap: 0.4rem">
-                              <strong>{{ s.title }}</strong>
-                              <span class="chip" [class]="sceneStatusTone(s.review.status)">{{ s.review.status }}</span>
-                            </div>
-                            <div class="muted" style="font-size: 0.85rem">{{ s.objective }}</div>
-                            <div class="row" style="gap: 0.4rem; margin-top: 0.5rem; flex-wrap: wrap">
-                              <span class="chip muted">{{ s.durationSec }}s</span>
-                              <span class="chip muted">{{ s.camera.shotType }}</span>
-                              <span class="chip muted">{{ s.objects.length }} objects</span>
-                              <span class="chip cyan">~{{ s.costEstimate ?? 0 }} credits</span>
-                            </div>
-                          </div>
-                          <div class="row">
-                            <button class="iconbtn">→</button>
-                          </div>
-                        </a>
-                        <div class="scene-row-actions">
-                          <button class="iconbtn sm" title="Move up" [disabled]="i === 0"
-                            (click)="moveScene(s.id, -1); $event.stopPropagation()">↑</button>
-                          <button class="iconbtn sm" title="Move down" [disabled]="last"
-                            (click)="moveScene(s.id, 1); $event.stopPropagation()">↓</button>
-                          <button class="iconbtn sm" title="Duplicate"
-                            (click)="duplicateScene(s.id); $event.stopPropagation()">⧉</button>
-                          <button class="iconbtn sm danger" title="Delete"
-                            (click)="askDeleteScene(s.id); $event.stopPropagation()">🗑</button>
-                        </div>
-                      </div>
-                    }
-                    @if (p.scenes.length === 0) {
-                      <div class="empty-state">
-                        <div class="empty-art">🎬</div>
-                        <div style="font-family: var(--font-display); font-weight: 600">No scenes yet</div>
-                        <p class="muted" style="font-size: 0.85rem">Generate from script or add manually.</p>
-                        <button class="btn primary sm" (click)="addScene()">+ Add first scene</button>
-                      </div>
-                    }
-                  </div>
-                } @else {
-                  <div class="storyboard-grid">
-                    @if (p.scenes.length === 0) {
-                      <div class="sb-empty">
-                        <div style="font-size: 1.8rem">🎬</div>
-                        <div style="font-family: var(--font-display); font-weight: 600">No scenes to storyboard</div>
-                        <p class="muted" style="font-size: 0.85rem">Add a scene first, then suggest panels.</p>
-                        <button class="btn primary sm" (click)="addScene()">+ Add first scene</button>
-                      </div>
-                    }
-                    @for (s of p.scenes; track s.id; let i = $index) {
-                      <div class="sb-panel" [class.locked]="s.storyboardPanel?.locked">
-                        <div class="sb-frame" [style.background-image]="storyboardThumb(s)">
-                          @if (!s.storyboardPanel?.keyframeUri && !s.thumbnailUrl) {
-                            <div class="sb-frame-empty">No frame yet</div>
-                          }
-                          <span class="sb-num">#{{ i + 1 }}</span>
-                          <span class="sb-duration">{{ s.durationSec }}s</span>
-                        </div>
-                        <div class="sb-body">
-                          <input
-                            class="sb-title-input"
-                            [ngModel]="s.title"
-                            (ngModelChange)="updateScene(s.id, { title: $event })"
-                            placeholder="Scene title"
-                          />
-                          <div class="sb-beat">{{ s.storyboardPanel?.beat || 'Beat — not set' }}</div>
-                          <textarea
-                            class="sb-action"
-                            rows="2"
-                            [ngModel]="s.storyboardPanel?.action ?? s.objective"
-                            (ngModelChange)="updatePanelAction(s.id, $event)"
-                            placeholder="What happens in this shot?"
-                          ></textarea>
-                          <div class="sb-meta">
-                            <span class="chip muted">{{ s.camera.shotType }}</span>
-                            <span class="chip muted">{{ s.camera.movement }}</span>
-                            <span class="chip muted">{{ s.camera.lens }}</span>
-                            @if (s.storyboardPanel?.provider) {
-                              <span class="chip cyan">{{ s.storyboardPanel?.provider }}</span>
-                            }
-                            @if (s.storyboardPanel?.locked) {
-                              <span class="chip green">🔒 locked</span>
-                            }
-                          </div>
-                          <div class="sb-actions">
-                            <button class="btn sm" type="button"
-                              (click)="regenerateStoryboardPanel(s.id)"
-                              [disabled]="regeneratingPanelId() === s.id">
-                              @if (regeneratingPanelId() === s.id) { <span class="loader"></span> Regen… }
-                              @else { ↻ Regenerate }
-                            </button>
-                            <button class="btn ghost sm" type="button" (click)="toggleStoryboardLock(s.id)">
-                              {{ s.storyboardPanel?.locked ? 'Unlock' : 'Lock' }}
-                            </button>
-                            <a class="btn ghost sm" [routerLink]="['/projects', p.id, 'scenes', s.id]">Open →</a>
-                          </div>
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-
-                @if (p.scenes.length > 0) {
-                  <div class="finalize-banner" [class.ready]="allScenesApproved(p)">
-                    <div>
-                      <strong>{{ allScenesApproved(p) ? 'All scenes approved 🎉' : 'Approval progress' }}</strong>
-                      <p class="muted" style="font-size: 0.82rem; margin: 4px 0 0">
-                        {{ approvedCount(p) }} / {{ p.scenes.length }} scenes approved.
-                        {{ allScenesApproved(p) ? "You're ready to render the final video." : 'Approve every scene to unlock final assembly.' }}
-                      </p>
-                    </div>
-                    <a class="btn cool" [routerLink]="['/projects', p.id, 'final']">🎞 Open final video</a>
-                  </div>
-                }
               }
 
               @case ('review') {
@@ -972,16 +1218,14 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                   <div class="check-item" [class.ok]="!!p.title"><span class="dot"></span> Title set</div>
                   <div class="check-item" [class.ok]="!!p.creativeDirection.genre"><span class="dot"></span> Genre defined</div>
                   <div class="check-item" [class.ok]="p.characters.length > 0"><span class="dot"></span> At least one character</div>
-                  <div class="check-item" [class.ok]="p.scenes.length > 0"><span class="dot"></span> At least one scene</div>
                   <div class="check-item" [class.ok]="p.creativeDirection.colorPalette.length >= 2"><span class="dot"></span> 2+ palette colors</div>
-                  <div class="check-item" [class.ok]="allScenesApproved(p)"><span class="dot"></span> All scenes approved</div>
                 </div>
                 <div class="row" style="margin-top: 1.2rem; gap: 0.5rem; flex-wrap: wrap">
-                  <a class="btn primary" [routerLink]="['/projects', p.id, 'final']">🎞 Open final-video assembly</a>
-                  @if (p.scenes.length > 0) {
-                    <a class="btn" [routerLink]="['/projects', p.id, 'scenes', p.scenes[0].id]">↺ Back to Scene 1</a>
-                  }
+                  <a class="btn primary" [routerLink]="['/projects', p.id, 'moodboard']">✨ Continue → Moodboard</a>
                 </div>
+                <p class="muted" style="margin-top: 0.6rem; font-size: 0.78rem">
+                  Once the contract is ready, the backend plans your scenes and storyboard. Review the suggested moodboard next.
+                </p>
               }
 
               @case ('yt_hook') {
@@ -1329,7 +1573,11 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
                     <div class="row" style="margin-top: 0.6rem; gap: 0.6rem">
                       <div class="ref-thumb"
                         [style.background-image]="'url(' + (logo.thumbnail || logo.uri) + ')'"
-                        style="width: 96px; height: 96px"></div>
+                        style="width: 96px; height: 96px">
+                        <button class="edit-img-btn" type="button" title="Edit logo" (click)="editAssetById(logo.id, 'Brand logo')">
+                          <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                        </button>
+                      </div>
                       <div>
                         <div style="font-weight: 600">{{ logo.name }}</div>
                         <button class="btn ghost sm" type="button"
@@ -1714,37 +1962,8 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
             </div>
           </section>
 
-          @if (previewOpen()) {
-            <aside class="contract-preview card">
-              <div class="row" style="justify-content: space-between; margin-bottom: 0.5rem">
-                <div class="row" style="gap: 0.4rem">
-                  <span class="chip cyan">live</span>
-                  <strong style="font-family: var(--font-display)">Contract</strong>
-                </div>
-                <div class="row" style="gap: 0.3rem">
-                  <button class="btn sm" [class.primary]="format() === 'yaml'" (click)="format.set('yaml')">YAML</button>
-                  <button class="btn sm" [class.primary]="format() === 'json'" (click)="format.set('json')">JSON</button>
-                </div>
-              </div>
-              <pre class="contract-pre side">{{ contractText() }}</pre>
-            </aside>
-          }
         </div>
 
-        @if (deleteSceneId(); as did) {
-          <div class="modal-backdrop" (click)="deleteSceneId.set(null)">
-            <div class="modal" (click)="$event.stopPropagation()">
-              <strong style="font-family: var(--font-display); font-size: 1.05rem">Delete scene?</strong>
-              <p class="muted" style="margin-top: 0.4rem">
-                Removes this scene and its objects. This cannot be undone.
-              </p>
-              <div class="row" style="gap: 0.5rem; justify-content: flex-end; margin-top: 1rem">
-                <button class="btn" (click)="deleteSceneId.set(null)">Cancel</button>
-                <button class="btn danger" (click)="deleteSceneConfirmed(did)">Delete</button>
-              </div>
-            </div>
-          </div>
-        }
       </div>
     } @else {
       <div class="loading">
@@ -1764,23 +1983,19 @@ export class WizardComponent {
   private readonly router = inject(Router);
   private readonly projects = inject(ProjectsService);
   protected readonly assets = inject(AssetsService);
-  private readonly scenes = inject(ScenesService);
   protected readonly modelsService = inject(ModelsService);
   private readonly exportSvc = inject(ContractExportService);
+  private readonly eligibilitySvc = inject(ImageEligibilityService);
+  private readonly editorBridge = inject(ImageEditorBridgeService);
   private readonly moodboardSvc = inject(MoodboardService);
-  private readonly storyboardSvc = inject(StoryboardService);
   protected readonly charactersLibrary = inject(CharactersService);
 
   protected readonly active = signal<StepKey>('goal');
-  protected readonly previewOpen = signal(true);
+  protected readonly draftSaving = signal(false);
   protected readonly format = signal<'yaml' | 'json'>('yaml');
   protected readonly draftScript = signal('');
   protected readonly moodboardLoading = signal(false);
   protected readonly moodboardRationale = signal<string | null>(null);
-  protected readonly storyboardLoading = signal(false);
-  protected readonly storyboardRationale = signal<string | null>(null);
-  protected readonly scenesView = signal<'list' | 'storyboard'>('list');
-  protected readonly regeneratingPanelId = signal<string | null>(null);
   protected readonly libraryPickerOpen = signal(false);
   protected readonly importingProfileId = signal<string | null>(null);
 
@@ -1789,7 +2004,6 @@ export class WizardComponent {
   protected readonly showPickerForCharId = signal<string | null>(null);
   protected readonly generatingAvatarFor = signal<string | null>(null);
   protected readonly uploadStatus = signal<string | null>(null);
-  protected readonly deleteSceneId = signal<string | null>(null);
 
   protected readonly imageAssets = computed(() =>
     this.assets.assets().filter((a) => a.type === 'image'),
@@ -1835,12 +2049,30 @@ export class WizardComponent {
       .subscribe((p) => {
         if (!p) return;
         this.project.set(p);
+        // Resume on the last saved step if one was recorded.
+        if (p.lastEditedStep && this.steps().some((s) => s.key === p.lastEditedStep)) {
+          this.active.set(p.lastEditedStep as StepKey);
+        }
         // If we just created a new project (URL is /projects/new), update URL to /projects/:id without re-routing.
         const currentId = this.route.snapshot.paramMap.get('id');
         if (!currentId) {
           this.router.navigate(['/projects', p.id], { replaceUrl: true });
         }
       });
+  }
+
+  protected saveDraft() {
+    const p = this.project();
+    if (!p || this.draftSaving()) return;
+    this.draftSaving.set(true);
+    const route = `/projects/${p.id}`;
+    this.projects.saveDraft(p.id, route, this.active()).subscribe({
+      next: () => {
+        this.draftSaving.set(false);
+        this.router.navigate(['/drafts']);
+      },
+      error: () => this.draftSaving.set(false),
+    });
   }
 
   protected stepIndex() { return this.steps().findIndex((s) => s.key === this.active()); }
@@ -1856,17 +2088,23 @@ export class WizardComponent {
     const i = this.stepIndex();
     if (i > 0) this.active.set(list[i - 1].key);
   }
-  protected togglePreview() { this.previewOpen.update((v) => !v); }
 
   protected completed(key: StepKey, p: CreativeContract): boolean {
     switch (key) {
       case 'goal': return !!p.title && !!p.goal;
       case 'script': return !!p.description && p.output.targetDurationSec > 0;
       case 'style': return !!p.creativeDirection.genre && p.creativeDirection.colorPalette.length >= 2;
+      case 'cinematography': return !!p.cinematography?.enabled && (
+        !!p.cinematography?.lensType ||
+        !!p.cinematography?.shotType ||
+        !!p.cinematography?.movement ||
+        !!p.cinematography?.filmStock ||
+        !!p.cinematography?.colorGrade ||
+        (p.cinematography?.lighting?.length ?? 0) > 0
+      );
       case 'characters': return p.characters.length > 0;
       case 'assets': return true;
-      case 'scenes': return p.scenes.length > 0;
-      case 'review': return p.scenes.length > 0;
+      case 'review': return p.status === 'review' || p.status === 'completed';
       case 'yt_hook': return !!p.shortConfig?.hook?.trim() && !!p.shortConfig?.niche?.trim();
       case 'yt_audio': return !!p.shortConfig?.audio?.title || p.shortConfig?.audio?.source === 'generated';
       case 'yt_style': return !!p.shortConfig?.captionStyle;
@@ -2338,6 +2576,35 @@ export class WizardComponent {
     this.project.set(updated);
     this.projects.update(p.id, { creativeDirection: updated.creativeDirection });
   }
+  protected defaultSubtitleStyle(): NonNullable<CreativeContract['creativeDirection']['subtitleStyle']> {
+    const p = this.project();
+    return {
+      enabledByDefault: true,
+      fontFamily: p?.creativeDirection.fonts.subtitle || 'Inter',
+      fontWeight: 'semibold',
+      fontSizePx: 28,
+      color: '#FFFFFF',
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      position: 'bottom',
+      style: 'clean lower third',
+    };
+  }
+
+  protected updateSubtitleStyle<K extends keyof NonNullable<CreativeContract['creativeDirection']['subtitleStyle']>>(
+    key: K,
+    value: NonNullable<CreativeContract['creativeDirection']['subtitleStyle']>[K],
+  ) {
+    const p = this.project();
+    if (!p) return;
+    const current = p.creativeDirection.subtitleStyle ?? this.defaultSubtitleStyle();
+    const subtitleStyle = { ...current, [key]: value };
+    this.updateCreative('subtitleStyle', subtitleStyle);
+  }
+
+  protected weightCss(w: 'regular' | 'medium' | 'semibold' | 'bold'): number {
+    return { regular: 400, medium: 500, semibold: 600, bold: 700 }[w];
+  }
+
   protected updateFonts(slot: keyof CreativeContract['creativeDirection']['fonts'], value: string) {
     const p = this.project();
     if (!p) return;
@@ -2360,6 +2627,166 @@ export class WizardComponent {
     if (!p) return;
     this.updateCreative('mood', p.creativeDirection.mood.filter((m) => m !== value));
   }
+  /* -------- Cinematic direction (AI-responsive only) -------- */
+  protected readonly cinemaLensTypes = LENS_TYPES;
+  protected readonly cinemaDepthOfField = DEPTH_OF_FIELD;
+  protected readonly cinemaLensCharacter = LENS_CHARACTERISTICS;
+  protected readonly cinemaShotTypes = SHOT_TYPES;
+  protected readonly cinemaCameraAngles = CAMERA_ANGLES;
+  protected readonly cinemaMovements = CAMERA_MOVEMENTS;
+  protected readonly cinemaFilmStocks = FILM_STOCKS;
+  protected readonly cinemaColorGrades = COLOR_GRADES;
+  protected readonly cinemaGrain = GRAIN_OPTIONS;
+  protected readonly cinemaLighting = LIGHTING_OPTIONS;
+  protected readonly cinemaTimeOfDay = TIME_OF_DAY;
+  protected readonly cinemaAtmosphere = ATMOSPHERE_OPTIONS;
+  protected readonly cinemaStyleReferences = STYLE_REFERENCES;
+
+  private defaultCinematography(): Cinematography {
+    return {
+      enabled: true,
+      lensCharacter: [],
+      lighting: [],
+      atmosphere: [],
+    };
+  }
+
+  protected ensureCinematography(): Cinematography {
+    const p = this.project();
+    if (!p) return this.defaultCinematography();
+    if (p.cinematography) return p.cinematography;
+    const cinematography = this.defaultCinematography();
+    const updated = { ...p, cinematography };
+    this.project.set(updated);
+    this.projects.update(p.id, { cinematography });
+    return cinematography;
+  }
+
+  protected updateCinema<K extends keyof Cinematography>(key: K, value: Cinematography[K]) {
+    const p = this.project();
+    if (!p) return;
+    const current = p.cinematography ?? this.defaultCinematography();
+    const cinematography = { ...current, [key]: value };
+    const updated = { ...p, cinematography };
+    this.project.set(updated);
+    this.projects.update(p.id, { cinematography });
+  }
+
+  protected toggleCinemaChip(key: 'lensCharacter' | 'lighting' | 'atmosphere', value: string) {
+    const p = this.project();
+    if (!p) return;
+    const current = p.cinematography ?? this.defaultCinematography();
+    const arr = current[key] ?? [];
+    const next = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+    this.updateCinema(key, next as Cinematography[typeof key]);
+  }
+
+  protected isCinemaChipActive(key: 'lensCharacter' | 'lighting' | 'atmosphere', value: string): boolean {
+    return this.project()?.cinematography?.[key]?.includes(value) ?? false;
+  }
+
+  protected resetCinematography() {
+    this.updateCinema('lensType', '');
+    this.updateCinema('lensCharacter', []);
+    this.updateCinema('depthOfField', '');
+    this.updateCinema('shotType', undefined);
+    this.updateCinema('cameraAngle', undefined);
+    this.updateCinema('movement', undefined);
+    this.updateCinema('filmStock', undefined);
+    this.updateCinema('colorGrade', undefined);
+    this.updateCinema('grain', undefined);
+    this.updateCinema('lighting', []);
+    this.updateCinema('timeOfDay', undefined);
+    this.updateCinema('atmosphere', []);
+    this.updateCinema('styleReference', undefined);
+    this.updateCinema('promptNotes', undefined);
+  }
+
+  /** Count of distinct selections that will appear in the prompt snippet.
+   *  AI video models stop tracking around 7–8 cues; past that, the prompt
+   *  tends to lose detail or contradict itself. We use this to colour-code
+   *  the snippet panel. */
+  protected cinemaSelectionCount(): number {
+    const c = this.project()?.cinematography;
+    if (!c || !c.enabled) return 0;
+    let n = 0;
+    if (c.lensType) n++;
+    if (c.depthOfField) n++;
+    n += c.lensCharacter.length;
+    if (c.shotType) n++;
+    if (c.cameraAngle) n++;
+    if (c.movement) n++;
+    if (c.filmStock) n++;
+    if (c.colorGrade) n++;
+    if (c.grain) n++;
+    n += c.lighting.length;
+    if (c.timeOfDay) n++;
+    n += c.atmosphere.length;
+    if (c.styleReference) n++;
+    if (c.promptNotes?.trim()) n++;
+    return n;
+  }
+
+  protected cinemaBudgetTone(): 'green' | 'cyan' | 'amber' | 'rose' {
+    const n = this.cinemaSelectionCount();
+    if (n === 0) return 'green';
+    if (n <= 4) return 'green';
+    if (n <= 7) return 'cyan';
+    if (n <= 10) return 'amber';
+    return 'rose';
+  }
+
+  protected cinemaBudgetMessage(): string {
+    const n = this.cinemaSelectionCount();
+    if (n === 0) return 'No cues selected yet.';
+    if (n <= 4) return 'Focused — every cue will land clearly.';
+    if (n <= 7) return 'Sweet spot — strong, coherent direction.';
+    if (n <= 10) return 'Getting busy — AI models may drop some cues.';
+    return 'Too many — models will likely ignore or contradict cues. Consider trimming.';
+  }
+
+  /** Stack selections into the prompt format AI video models respond to:
+   *  [lens + character] + [DOF] + [shot/angle/movement] + [time + lighting]
+   *  + [film stock + grade + grain] + [atmosphere] + [reference] + [notes]. */
+  protected cinemaPromptSnippet(): string {
+    const c = this.project()?.cinematography;
+    if (!c || !c.enabled) return '';
+    const parts: string[] = [];
+
+    const lens: string[] = [];
+    if (c.lensType) {
+      const label = LENS_TYPES.find((l) => l.value === c.lensType)?.label;
+      if (label) lens.push(`${label.toLowerCase()} lens`);
+    }
+    if (c.lensCharacter.length) lens.push(c.lensCharacter.join(', '));
+    if (lens.length) parts.push(lens.join(', '));
+
+    if (c.depthOfField) {
+      const dofLabel = DEPTH_OF_FIELD.find((d) => d.value === c.depthOfField)?.label;
+      if (dofLabel) parts.push(dofLabel.toLowerCase());
+    }
+
+    if (c.shotType) parts.push(c.shotType);
+    if (c.cameraAngle) parts.push(c.cameraAngle);
+    if (c.movement) parts.push(c.movement);
+
+    const light: string[] = [];
+    if (c.timeOfDay) light.push(c.timeOfDay);
+    light.push(...c.lighting);
+    if (light.length) parts.push(light.join(', '));
+
+    if (c.filmStock) parts.push(c.filmStock);
+    if (c.colorGrade) parts.push(`${c.colorGrade} color grade`);
+    if (c.grain) parts.push(c.grain);
+
+    if (c.atmosphere.length) parts.push(c.atmosphere.join(', '));
+
+    if (c.styleReference) parts.push(`in the style of ${c.styleReference}`);
+    if (c.promptNotes?.trim()) parts.push(c.promptNotes.trim());
+
+    return parts.join(', ');
+  }
+
   protected addNegative(value: string) {
     if (!value.trim()) return;
     const p = this.project();
@@ -2443,6 +2870,37 @@ export class WizardComponent {
     const direction: CreativeDirection = { ...p.creativeDirection, references };
     this.applyCreativeDirection(direction);
     this.moodboardSvc.update(p.id, direction).subscribe();
+  }
+
+  /* ----------------------------- Edit-image hand-off ----------------------------- */
+
+  protected editMoodboardRef(r: MoodboardReference) {
+    this.editorBridge.open({
+      sourceUri: r.uri,
+      contextLabel: `Moodboard reference · ${r.tag || 'untagged'}`,
+      onApply: (newUri) => {
+        const p = this.project();
+        if (!p) return;
+        const references = p.creativeDirection.references.map((x) =>
+          x.id === r.id ? { ...x, uri: newUri, thumbnail: newUri } : x,
+        );
+        const direction: CreativeDirection = { ...p.creativeDirection, references };
+        this.applyCreativeDirection(direction);
+        this.projects.update(p.id, { creativeDirection: direction });
+      },
+    });
+  }
+
+  protected editAssetById(assetId: string, label?: string) {
+    const a = this.assets.get(assetId);
+    if (!a) return;
+    this.editorBridge.open({
+      sourceUri: a.uri,
+      contextLabel: label ? `${label} · ${a.name}` : `Asset · ${a.name}`,
+      onApply: (newUri) => {
+        this.assets.update(assetId, { uri: newUri, thumbnail: newUri });
+      },
+    });
   }
 
   private applyCreativeDirection(direction: CreativeDirection) {
@@ -2615,110 +3073,6 @@ export class WizardComponent {
     });
   }
 
-  protected allScenesApproved(p: CreativeContract): boolean {
-    return p.scenes.length > 0 && p.scenes.every((s) => s.review.status === 'approved');
-  }
-  protected approvedCount(p: CreativeContract): number {
-    return p.scenes.filter((s) => s.review.status === 'approved').length;
-  }
-
-  protected updateScene(sceneId: string, patch: Partial<Scene>) {
-    const p = this.project();
-    if (!p) return;
-    const scenes = p.scenes.map((s) => (s.id === sceneId ? { ...s, ...patch } : s));
-    this.project.set({ ...p, scenes });
-    this.projects.update(p.id, { scenes });
-  }
-
-  protected storyboardThumb(scene: Scene): string {
-    const uri = scene.storyboardPanel?.thumbnailUri ?? scene.storyboardPanel?.keyframeUri ?? scene.thumbnailUrl;
-    return uri ? `url(${uri})` : '';
-  }
-
-  protected updatePanelAction(sceneId: string, action: string) {
-    const p = this.project();
-    if (!p) return;
-    const scene = p.scenes.find((s) => s.id === sceneId);
-    if (!scene) return;
-    const panel: StoryboardPanel = scene.storyboardPanel
-      ? { ...scene.storyboardPanel, action }
-      : {
-          action,
-          beat: '',
-          locked: false,
-        };
-    this.updateScene(sceneId, { storyboardPanel: panel });
-    this.storyboardSvc.updatePanel(p.id, sceneId, panel).subscribe();
-  }
-
-  protected toggleStoryboardLock(sceneId: string) {
-    const p = this.project();
-    if (!p) return;
-    const scene = p.scenes.find((s) => s.id === sceneId);
-    if (!scene?.storyboardPanel) return;
-    const panel: StoryboardPanel = { ...scene.storyboardPanel, locked: !scene.storyboardPanel.locked };
-    this.updateScene(sceneId, { storyboardPanel: panel });
-    this.storyboardSvc.toggleLock(p.id, sceneId).subscribe();
-  }
-
-  protected suggestStoryboard() {
-    const p = this.project();
-    if (!p || this.storyboardLoading() || p.scenes.length === 0) return;
-    this.storyboardLoading.set(true);
-    this.storyboardSvc.suggest(p.id).subscribe({
-      next: (suggestion: StoryboardSuggestion) => {
-        this.storyboardRationale.set(suggestion.rationale);
-        this.storyboardSvc.applySuggestion(p.id, suggestion).subscribe((scenes) => {
-          if (scenes) {
-            const project = this.project();
-            if (project) this.project.set({ ...project, scenes });
-          }
-          this.storyboardLoading.set(false);
-        });
-      },
-      error: () => this.storyboardLoading.set(false),
-    });
-  }
-
-  protected regenerateStoryboardPanel(sceneId: string) {
-    const p = this.project();
-    if (!p) return;
-    this.regeneratingPanelId.set(sceneId);
-    this.storyboardSvc.regeneratePanel(p.id, sceneId).subscribe({
-      next: (panel) => {
-        if (panel) this.updateScene(sceneId, { storyboardPanel: panel });
-        this.regeneratingPanelId.set(null);
-      },
-      error: () => this.regeneratingPanelId.set(null),
-    });
-  }
-
-  protected moveScene(sceneId: string, direction: -1 | 1) {
-    const p = this.project();
-    if (!p) return;
-    this.scenes.move(p.id, sceneId, direction).subscribe((scenes) => {
-      this.project.set({ ...p, scenes });
-    });
-  }
-  protected duplicateScene(sceneId: string) {
-    const p = this.project();
-    if (!p) return;
-    this.scenes.duplicate(p.id, sceneId).subscribe(() => {
-      this.projects.get(p.id).subscribe((np) => np && this.project.set(np));
-    });
-  }
-  protected askDeleteScene(sceneId: string) {
-    this.deleteSceneId.set(sceneId);
-  }
-  protected deleteSceneConfirmed(sceneId: string) {
-    const p = this.project();
-    if (!p) return;
-    this.scenes.remove(p.id, sceneId).subscribe((scenes) => {
-      this.project.set({ ...p, scenes });
-      this.deleteSceneId.set(null);
-    });
-  }
-
   protected triggerUpload() {
     const input = document.querySelector<HTMLInputElement>('input[type="file"]');
     input?.click();
@@ -2729,6 +3083,19 @@ export class WizardComponent {
     if (files.length === 0) return;
     this.uploadStatus.set(`Uploading ${files.length} file${files.length > 1 ? 's' : ''}…`);
     let done = 0;
+    let blocked = 0;
+    let warned = 0;
+    const finalize = () => {
+      const totalProcessed = done + blocked;
+      if (totalProcessed === files.length) {
+        const parts: string[] = [];
+        if (done > 0) parts.push(`Uploaded ${done} ✓`);
+        if (warned > 0) parts.push(`${warned} with warnings`);
+        if (blocked > 0) parts.push(`${blocked} blocked by eligibility check`);
+        this.uploadStatus.set(parts.join(' · '));
+        setTimeout(() => this.uploadStatus.set(null), 4500);
+      }
+    };
     files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -2738,13 +3105,27 @@ export class WizardComponent {
           : file.type.startsWith('audio/')
             ? 'audio'
             : 'image';
-        this.assets.upload({ type, name: file.name, uri: dataUri }).subscribe(() => {
-          done += 1;
-          if (done === files.length) {
-            this.uploadStatus.set(`Uploaded ${done} file${done > 1 ? 's' : ''} ✓`);
-            setTimeout(() => this.uploadStatus.set(null), 3000);
-          }
-        });
+        const proceed = () => {
+          this.assets.upload({ type, name: file.name, uri: dataUri }).subscribe(() => {
+            done += 1;
+            finalize();
+          });
+        };
+        if (type === 'image') {
+          this.eligibilitySvc.check({ fileName: file.name, uri: dataUri }).subscribe((verdict) => {
+            if (verdict.verdict === 'blocked') {
+              blocked += 1;
+              const reason = verdict.rules.find((r) => r.severity === 'fail')?.detail ?? verdict.summary;
+              this.uploadStatus.set(`Blocked "${file.name}" — ${reason}`);
+              setTimeout(() => finalize(), 100);
+              return;
+            }
+            if (verdict.verdict === 'warning') warned += 1;
+            proceed();
+          });
+        } else {
+          proceed();
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -2764,33 +3145,6 @@ export class WizardComponent {
         this.uploadStatus.set('Generated ✓');
         setTimeout(() => this.uploadStatus.set(null), 2500);
       });
-  }
-
-  protected addScene() {
-    const p = this.project();
-    if (!p) return;
-    const newScene: Scene = {
-      id: `scene-${String(p.scenes.length + 1).padStart(3, '0')}`,
-      index: p.scenes.length,
-      title: `Scene ${p.scenes.length + 1}`,
-      objective: '',
-      durationSec: 6,
-      generationMode: 'prepare_then_generate',
-      background: { mode: 'generate', description: '' },
-      camera: { shotType: 'medium shot', movement: 'static', lens: '35mm' },
-      characters: [],
-      objects: [],
-      narration: { text: '', voiceRef: '' },
-      audio: { backgroundMusic: { mode: 'generate', genre: '', tempo: 'medium' }, soundEffects: [] },
-      subtitles: { enabled: true, style: 'clean lower third' },
-      transitionOut: { type: 'fade', durationMs: 400 },
-      continuity: { usePreviousFinalFrame: true, exportFinalFrameForNextScene: true },
-      review: { status: 'draft', lockedAssets: [] },
-      costEstimate: 30,
-    };
-    const scenes = [...p.scenes, newScene];
-    this.project.set({ ...p, scenes });
-    this.projects.update(p.id, { scenes });
   }
 
   protected mockGenerateScript() {
@@ -2834,11 +3188,7 @@ ${p.title || 'A new question'} now lingers in the air.`);
 
   protected generateContract() {
     const p = this.project();
-    if (!p || p.scenes.length === 0) {
-      // jump to scenes step to add one
-      this.active.set('scenes');
-      return;
-    }
-    this.router.navigate(['/projects', p.id, 'scenes', p.scenes[0].id]);
+    if (!p) return;
+    this.router.navigate(['/projects', p.id, 'moodboard']);
   }
 }

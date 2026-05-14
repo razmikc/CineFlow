@@ -22,6 +22,13 @@ export const routes: Routes = [
           import('./features/wizard/wizard.component').then((m) => m.WizardComponent),
       },
       {
+        path: 'projects/:id/moodboard',
+        loadComponent: () =>
+          import('./features/moodboard/moodboard.component').then(
+            (m) => m.MoodboardPageComponent,
+          ),
+      },
+      {
         path: 'projects/:id/scenes/:sceneId',
         loadComponent: () =>
           import('./features/scene-workspace/scene-workspace.component').then(
@@ -58,6 +65,73 @@ export const routes: Routes = [
         path: 'jobs',
         loadComponent: () =>
           import('./features/jobs/jobs.component').then((m) => m.JobsComponent),
+      },
+      {
+        path: 'videos',
+        loadComponent: () =>
+          import('./features/videos/videos.component').then((m) => m.VideosComponent),
+      },
+      {
+        path: 'drafts',
+        loadComponent: () =>
+          import('./features/drafts/drafts.component').then((m) => m.DraftsComponent),
+      },
+      {
+        path: 'tools',
+        loadComponent: () =>
+          import('./features/tools/tools.component').then((m) => m.ToolsComponent),
+      },
+      {
+        path: 'tools/image-generation',
+        loadComponent: () =>
+          import('./features/tools/image-generation/image-generation.component').then(
+            (m) => m.ImageGenerationToolComponent,
+          ),
+      },
+      {
+        path: 'tools/camera-angles',
+        loadComponent: () =>
+          import('./features/tools/camera-angles/camera-angles.component').then(
+            (m) => m.CameraAnglesToolComponent,
+          ),
+      },
+      {
+        path: 'tools/skin-enhancer',
+        loadComponent: () =>
+          import('./features/tools/skin-enhancer/skin-enhancer.component').then(
+            (m) => m.SkinEnhancerToolComponent,
+          ),
+      },
+      {
+        path: 'tools/image-editor',
+        loadComponent: () =>
+          import('./features/tools/image-editor/image-editor.component').then(
+            (m) => m.ImageEditorToolComponent,
+          ),
+      },
+      {
+        path: 'tools/audio-editor',
+        loadComponent: () =>
+          import('./features/tools/audio-editor/audio-editor.component').then(
+            (m) => m.AudioEditorToolComponent,
+          ),
+      },
+      {
+        path: 'tools/video-editor',
+        loadComponent: () =>
+          import('./features/tools/video-editor/video-editor.component').then(
+            (m) => m.VideoEditorComponent,
+          ),
+      },
+      // Legacy paths — redirect to the unified editor
+      { path: 'tools/object-removal', redirectTo: 'tools/image-editor', pathMatch: 'full' },
+      { path: 'tools/image-expand', redirectTo: 'tools/image-editor', pathMatch: 'full' },
+      {
+        path: 'tools/eligibility',
+        loadComponent: () =>
+          import('./features/tools/eligibility-checker/eligibility-checker.component').then(
+            (m) => m.EligibilityCheckerComponent,
+          ),
       },
     ],
   },

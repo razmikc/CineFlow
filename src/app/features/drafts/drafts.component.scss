@@ -1,0 +1,84 @@
+:host { display: block; }
+
+.drafts-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+.drafts-header h1 { font-family: var(--font-display); font-size: 1.5rem; margin: 0.3rem 0 0.4rem; }
+.drafts-header .muted { max-width: 60ch; font-size: 0.84rem; line-height: 1.5; }
+
+.empty-state {
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  text-align: center;
+}
+.empty-art { font-size: 2.6rem; }
+
+.drafts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.8rem;
+}
+
+.draft-card {
+  display: flex;
+  flex-direction: column;
+  background: rgba(10, 13, 35, 0.45);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.draft-card:hover { border-color: rgba(139, 92, 246, 0.55); transform: translateY(-1px); }
+
+.draft-thumb {
+  position: relative;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.4), rgba(139, 92, 246, 0.3));
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.draft-icon { font-size: 2.4rem; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45)); }
+.draft-stage {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.draft-body { padding: 0.8rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.draft-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.draft-desc {
+  margin: 0.4rem 0 0;
+  color: var(--text-2);
+  font-size: 0.82rem;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.btn.ghost.danger:hover { color: #ff6b8a; border-color: rgba(255, 107, 138, 0.55); }

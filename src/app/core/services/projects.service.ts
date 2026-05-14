@@ -88,6 +88,18 @@ export class ProjectsService {
     return of(undefined).pipe(delay(120));
   }
 
+  /**
+   * Mark a project as a draft and remember where the user was so they can resume.
+   * PATCH /api/v1/projects/{id}/draft  { route, step? }
+   */
+  saveDraft(id: string, route: string, step?: string): Observable<CreativeContract | undefined> {
+    return this.update(id, {
+      status: 'draft',
+      lastEditedRoute: route,
+      lastEditedStep: step,
+    });
+  }
+
   startFinalRender(id: string): Observable<CreativeContract | undefined> {
     const finalVideo = {
       status: 'rendering' as const,

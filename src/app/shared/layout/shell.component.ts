@@ -131,7 +131,21 @@ export class ShellComponent {
         { label: 'Characters', path: '/characters', icon: this.icon('user') },
         { label: 'Asset library', path: '/assets', icon: this.icon('image') },
         { label: 'AI models', path: '/models', icon: this.icon('chip'), badge: '13' },
-        { label: 'Jobs', path: '/jobs', icon: this.icon('jobs') },
+        { label: 'Draft projects', path: '/drafts', icon: this.icon('draft') },
+        { label: 'Complete projects', path: '/videos', icon: this.icon('video') },
+      ],
+    },
+    {
+      title: 'Tools',
+      items: [
+        { label: 'All tools', path: '/tools', icon: this.icon('tools') },
+        { label: 'Image generation', path: '/tools/image-generation', icon: this.icon('imagegen') },
+        { label: 'Camera angles', path: '/tools/camera-angles', icon: this.icon('camera') },
+        { label: 'Skin enhancer', path: '/tools/skin-enhancer', icon: this.icon('sparkle') },
+        { label: 'Image editor', path: '/tools/image-editor', icon: this.icon('editor') },
+        { label: 'Audio editor', path: '/tools/audio-editor', icon: this.icon('audio') },
+        { label: 'Video editor', path: '/tools/video-editor', icon: this.icon('video') },
+        { label: 'Eligibility check', path: '/tools/eligibility', icon: this.icon('shield') },
       ],
     },
   ];
@@ -148,6 +162,17 @@ export class ShellComponent {
       chip: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="5" width="10" height="10" rx="1.5"/><path d="M8 5V3M12 5V3M8 17v-2M12 17v-2M5 8H3M5 12H3M17 8h-2M17 12h-2"/></svg>`,
       jobs: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3.5 6.5h13M3.5 10h13M3.5 13.5h8" stroke-linecap="round"/><circle cx="14.5" cy="13.5" r="2.5"/></svg>`,
       user: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="7" r="3.2"/><path d="M3.5 17c.8-3.4 3.5-5 6.5-5s5.7 1.6 6.5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      tools: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13.2 3.5a3.2 3.2 0 0 0-4.4 4.4l-5.1 5.1a1.5 1.5 0 0 0 2.1 2.1l5.1-5.1a3.2 3.2 0 0 0 4.4-4.4l-1.9 1.9-1.7-.4-.4-1.7 1.9-1.9Z" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      camera: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="6" width="15" height="10" rx="2"/><path d="M7 6V4.5h6V6" stroke-linecap="round"/><circle cx="10" cy="11" r="2.8"/></svg>`,
+      sparkle: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 3v3M10 14v3M3 10h3M14 10h3M5 5l2 2M13 13l2 2M5 15l2-2M13 7l2-2" stroke-linecap="round"/></svg>`,
+      shield: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M10 2.5 3.5 4.8v5.4c0 4 3 6.4 6.5 7.3 3.5-.9 6.5-3.3 6.5-7.3V4.8L10 2.5Z" stroke-linejoin="round"/><path d="m7.5 10 1.8 1.8L13 8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      imagegen: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="3" width="15" height="14" rx="2.5"/><circle cx="7" cy="8" r="1.6"/><path d="m3 14 4-4 4 4 3-3 3 3"/><path d="M14.5 4.5v2M13.5 5.5h2" stroke-linecap="round"/></svg>`,
+      eraser: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m4 13 6-6 5 5-6 6H6l-2-2v-3z" stroke-linejoin="round"/><path d="M9 8l5 5" stroke-linecap="round"/></svg>`,
+      expand: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="6" y="6" width="8" height="8" rx="1"/><path d="M3 7V3h4M13 3h4v4M17 13v4h-4M7 17H3v-4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      editor: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="3" width="15" height="14" rx="2.5"/><path d="M7 7l3 3-3 3M11 13h3" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      audio: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8v4M7 5v10M11 7v6M15 4v12M19 9v2" stroke-linecap="round"/></svg>`,
+      video: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="11" height="10" rx="1.5"/><path d="M13.5 9l4-2v6l-4-2z" stroke-linejoin="round"/></svg>`,
+      draft: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 3h7l4 4v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/><path d="M12 3v4h4M8 12l2 2 3-4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
     };
     return map[kind] ?? '';
   }

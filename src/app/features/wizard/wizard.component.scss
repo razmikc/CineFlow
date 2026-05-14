@@ -598,6 +598,14 @@
   align-items: center;
   justify-content: center;
 }
+.scene-thumb .edit-img-btn {
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+.scene-thumb .edit-img-btn svg { width: 11px; height: 11px; }
 .scene-num {
   font-family: var(--font-display);
   font-size: 1.1rem;
@@ -656,3 +664,106 @@
   .steps { flex-direction: row; overflow-x: auto; padding-bottom: 0.5rem; }
   .step { flex-shrink: 0; min-width: 200px; }
 }
+
+/* ---------- Cinematography step ---------- */
+.tab {
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 0.78rem;
+  text-transform: capitalize;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text-1); }
+.tab.active {
+  background: var(--grad-primary);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 18px rgba(139, 92, 246, 0.3);
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.45rem;
+}
+.chip-grid.compact { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+
+.opt-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.15rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text-1);
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+.opt-chip:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+.opt-chip.active {
+  border-color: var(--neon-violet);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.18), rgba(34, 211, 238, 0.08));
+}
+.opt-chip.sm {
+  font-size: 0.78rem;
+  padding: 0.4rem 0.6rem;
+}
+.opt-hint {
+  font-size: 0.7rem;
+  color: var(--text-3);
+}
+
+.ref-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+.ref-group-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--text-mute);
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.snippet {
+  margin-top: 1.4rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(34, 211, 238, 0.04));
+}
+.snippet-pre {
+  margin-top: 0.55rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 8px;
+  background: rgba(5, 6, 19, 0.55);
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-1);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.budget-msg {
+  margin-top: 0.55rem;
+  font-size: 0.8rem;
+  padding: 0.5rem 0.7rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+.budget-msg.tone-green { border-color: rgba(52, 211, 153, 0.45); background: rgba(52, 211, 153, 0.08); color: var(--text-1); }
+.budget-msg.tone-cyan  { border-color: rgba(34, 211, 238, 0.45); background: rgba(34, 211, 238, 0.08); color: var(--text-1); }
+.budget-msg.tone-amber { border-color: rgba(251, 191, 36, 0.5); background: rgba(251, 191, 36, 0.10); color: var(--text-1); }
+.budget-msg.tone-rose  { border-color: rgba(251, 113, 133, 0.55); background: rgba(251, 113, 133, 0.10); color: var(--text-1); }

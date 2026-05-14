@@ -28,6 +28,7 @@
 .mb-tile:hover { border-color: rgba(139, 92, 246, 0.45); transform: translateY(-1px); }
 .mb-tile.locked { border-color: rgba(52, 211, 153, 0.6); box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.4) inset; }
 .mb-thumb {
+  position: relative;
   aspect-ratio: 1;
   background-size: cover;
   background-position: center;

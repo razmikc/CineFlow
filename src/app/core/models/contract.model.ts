@@ -101,6 +101,19 @@ export interface CreativeDirection {
   references: MoodboardReference[];
   lighting: string;
   era: string;
+  subtitleStyle?: SubtitleStyle;
+}
+
+/** Project-wide subtitle defaults. Scenes inherit unless overridden. */
+export interface SubtitleStyle {
+  enabledByDefault: boolean;
+  fontFamily: string;
+  fontWeight: 'regular' | 'medium' | 'semibold' | 'bold';
+  fontSizePx: number;
+  color: string;
+  backgroundColor: string;
+  position: 'top' | 'middle' | 'bottom';
+  style: 'clean lower third' | 'karaoke' | 'bold caption' | 'minimal' | 'documentary';
 }
 
 export interface CharacterVoice {
@@ -126,6 +139,30 @@ export interface CameraConfig {
   shotType: string;
   movement: string;
   lens: string;
+}
+
+/**
+ * Project-wide cinematic direction. Every field here is a cue that AI video
+ * models (Sora, Veo, Runway, Kling, Luma, Pika) demonstrably respond to —
+ * style nudges (camera bodies, specific lenses, exact f-stops, fps, aspect
+ * ratio) live elsewhere or as Output parameters, not in this prompt.
+ */
+export interface Cinematography {
+  enabled: boolean;
+  lensType?: 'ultra_wide' | 'wide' | 'standard' | 'portrait' | 'telephoto' | 'macro' | '';
+  lensCharacter: string[];      // anamorphic flare, fisheye, soft focus, vignetting…
+  depthOfField?: 'shallow' | 'moderate' | 'deep' | 'rack_focus' | 'bokeh' | '';
+  shotType?: string;            // wide, close-up…
+  cameraAngle?: string;         // eye level, low angle, dutch…
+  movement?: string;            // dolly in, handheld, steadicam…
+  filmStock?: string;           // CineStill 800T halation, Portra 400 warmth…
+  colorGrade?: string;          // teal & orange, bleach bypass…
+  grain?: string;               // 35mm film grain, VHS, light leaks…
+  lighting: string[];           // golden hour, low-key, rim-lit…
+  timeOfDay?: string;           // night, blue hour…
+  atmosphere: string[];         // fog, lens flare, smoke, rain…
+  styleReference?: string;      // Roger Deakins, Blade Runner 2049…
+  promptNotes?: string;         // free-form additional cues
 }
 
 export interface SceneCharacterUsage {
@@ -159,6 +196,12 @@ export interface SceneAudio {
 export interface Subtitles {
   enabled: boolean;
   style: string;
+  /** Optional per-scene text override. When empty, the scene's narration.text is used. */
+  text?: string;
+  /** Optional per-scene font override (falls back to project subtitleStyle.fontFamily). */
+  fontFamily?: string;
+  /** Optional per-scene color override (falls back to project subtitleStyle.color). */
+  color?: string;
 }
 
 export type TransitionType =
@@ -272,6 +315,8 @@ export interface Scene {
   endFrame?: SceneKeyframe;
   promptOverride?: string;
   storyboardPanel?: StoryboardPanel;
+  mood?: string[];
+  lighting?: string;
 }
 
 export interface Asset {
@@ -490,6 +535,11 @@ export interface CreativeContract {
   finalVideo?: FinalVideo;
   shortConfig?: ShortVideoConfig;
   adConfig?: AdConfig;
+  cinematography?: Cinematography;
+  /** Last route the user explicitly saved a draft from — used to resume. */
+  lastEditedRoute?: string;
+  /** Wizard step key the user was on when they saved (when applicable). */
+  lastEditedStep?: string;
 }
 
 export interface GenerationJob {

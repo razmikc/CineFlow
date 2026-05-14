@@ -16,6 +16,11 @@ import {
 import { ModelsService } from '../../core/services/models.service';
 import { AssetsService } from '../../core/services/assets.service';
 import {
+  EligibilityResult,
+  ImageEligibilityService,
+} from '../../core/services/image-eligibility.service';
+import { ImageEditorBridgeService } from '../../core/services/image-editor-bridge.service';
+import {
   AiModel,
   Asset,
   CameraAngle,
@@ -39,6 +44,32 @@ import {
         <div class="spacer"></div>
         <button class="btn danger sm" (click)="deleteCharacter(character)">Delete</button>
       </header>
+
+      @if (eligibilityNotice(); as notice) {
+        <div class="elig-banner" [class]="'verdict-' + notice.verdict">
+          <div class="row" style="justify-content: space-between; align-items: flex-start; gap: 0.8rem">
+            <div>
+              <strong style="font-size: 0.92rem">
+                @if (notice.verdict === 'blocked') { Upload blocked }
+                @else { Uploaded with warnings }
+                · {{ notice.fileName }}
+              </strong>
+              <div class="muted" style="margin-top: 0.2rem; font-size: 0.82rem">{{ notice.summary }}</div>
+              @if (notice.fails.length > 0) {
+                <ul style="margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.8rem">
+                  @for (f of notice.fails; track f) { <li>{{ f }}</li> }
+                </ul>
+              }
+              @if (notice.warns.length > 0) {
+                <ul style="margin: 0.4rem 0 0; padding-left: 1.1rem; font-size: 0.8rem; color: var(--text-2)">
+                  @for (w of notice.warns; track w) { <li>{{ w }}</li> }
+                </ul>
+              }
+            </div>
+            <button class="iconbtn" (click)="dismissEligibilityNotice()" title="Dismiss">×</button>
+          </div>
+        </div>
+      }
 
       <div class="detail-grid">
         <section class="card profile">
@@ -230,7 +261,16 @@ import {
             <div class="image-grid">
               @for (img of character.images; track img.id) {
                 <div class="image-tile" [class.primary]="img.id === character.primaryImageId">
-                  <div class="thumb" [style.background-image]="'url(' + img.uri + ')'" (click)="setPrimary(character.id, img.id)"></div>
+                  <div class="thumb" [style.background-image]="'url(' + img.uri + ')'" (click)="setPrimary(character.id, img.id)">
+                    <button
+                      class="edit-img-btn"
+                      type="button"
+                      title="Edit image"
+                      (click)="$event.stopPropagation(); editImage(character.id, img)"
+                    >
+                      <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+                    </button>
+                  </div>
                   <div class="img-meta">
                     <div class="row" style="justify-content: space-between; align-items: flex-start; gap: 0.4rem">
                       <div class="img-prompt">{{ img.prompt }}</div>
@@ -344,6 +384,16 @@ export class CharactersComponent {
   protected readonly charactersSrv = inject(CharactersService);
   private readonly modelsSrv = inject(ModelsService);
   private readonly assetsSrv = inject(AssetsService);
+  private readonly eligibilitySrv = inject(ImageEligibilityService);
+  private readonly editorBridge = inject(ImageEditorBridgeService);
+
+  protected readonly eligibilityNotice = signal<{
+    fileName: string;
+    verdict: EligibilityResult['verdict'];
+    summary: string;
+    fails: string[];
+    warns: string[];
+  } | null>(null);
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
@@ -479,16 +529,53 @@ export class CharactersComponent {
       reader.onload = () => {
         const result = reader.result;
         if (typeof result !== 'string') return;
-        this.charactersSrv.addImageFromSource(characterId, {
-          uri: result,
-          prompt: file.name,
-          provider: 'upload',
-          model: 'local',
+        this.eligibilitySrv.check({ fileName: file.name, uri: result }).subscribe((verdict) => {
+          if (verdict.verdict === 'blocked') {
+            this.eligibilityNotice.set({
+              fileName: file.name,
+              verdict: verdict.verdict,
+              summary: verdict.summary,
+              fails: verdict.rules.filter((r) => r.severity === 'fail').map((r) => `${r.label} — ${r.detail}`),
+              warns: verdict.rules.filter((r) => r.severity === 'warn').map((r) => `${r.label} — ${r.detail}`),
+            });
+            return;
+          }
+          if (verdict.verdict === 'warning') {
+            this.eligibilityNotice.set({
+              fileName: file.name,
+              verdict: verdict.verdict,
+              summary: verdict.summary,
+              fails: [],
+              warns: verdict.rules.filter((r) => r.severity === 'warn').map((r) => `${r.label} — ${r.detail}`),
+            });
+          }
+          this.charactersSrv.addImageFromSource(characterId, {
+            uri: result,
+            prompt: file.name,
+            provider: 'upload',
+            model: 'local',
+          });
         });
       };
       reader.readAsDataURL(file);
     });
     input.value = '';
+  }
+
+  protected dismissEligibilityNotice() {
+    this.eligibilityNotice.set(null);
+  }
+
+  protected editImage(characterId: string, img: CharacterImage) {
+    const c = this.charactersSrv.get(characterId);
+    const label = c ? `${c.name || 'Character'} — reference shot` : 'Character reference shot';
+    this.editorBridge.open({
+      sourceUri: img.uri,
+      contextLabel: label,
+      onApply: (newUri) => {
+        this.charactersSrv.updateImage(characterId, img.id, { uri: newUri, thumbnail: newUri });
+      },
+    });
   }
 
   protected openAssetPicker() {

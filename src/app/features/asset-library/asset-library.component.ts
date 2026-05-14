@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AssetsService } from '../../core/services/assets.service';
+import { ImageEditorBridgeService } from '../../core/services/image-editor-bridge.service';
 import { Asset, AssetType } from '../../core/models/contract.model';
 
 @Component({
@@ -46,6 +47,11 @@ import { Asset, AssetType } from '../../core/models/contract.model';
               <span class="chip" [class]="sourceTone(a.source)">{{ a.source }}</span>
               <span class="chip muted">{{ a.type }}</span>
             </div>
+            @if (a.type === 'image') {
+              <button class="edit-img-btn" type="button" title="Edit image" (click)="editAsset(a)">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
+              </button>
+            }
             <div class="thumb-actions">
               <button class="iconbtn">↻</button>
               <button class="iconbtn">🔍</button>
@@ -87,6 +93,7 @@ import { Asset, AssetType } from '../../core/models/contract.model';
 })
 export class AssetLibraryComponent {
   protected readonly assetsSrv = inject(AssetsService);
+  private readonly editorBridge = inject(ImageEditorBridgeService);
   protected readonly search = signal('');
   protected readonly filter = signal<AssetType | 'all'>('all');
   protected readonly types: AssetType[] = ['image', 'video', 'audio', 'voice', 'music', 'font', 'logo'];
@@ -116,6 +123,16 @@ export class AssetLibraryComponent {
       model: 'Midjourney v7',
     }).subscribe();
   }
+  protected editAsset(a: Asset) {
+    this.editorBridge.open({
+      sourceUri: a.uri,
+      contextLabel: `Asset · ${a.name}`,
+      onApply: (newUri) => {
+        this.assetsSrv.update(a.id, { uri: newUri, thumbnail: newUri });
+      },
+    });
+  }
+
   protected upload() {
     const samples = [
       'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800',

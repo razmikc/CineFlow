@@ -75,4 +75,12 @@ export class AssetsService {
     this._assets.update((list) => list.filter((a) => a.id !== id));
     return of(undefined).pipe(delay(120));
   }
+
+  /** Patch an existing asset — used by the image-editor bridge when the
+   *  user applies an edited image back to an asset. */
+  update(id: string, patch: Partial<Asset>): void {
+    this._assets.update((list) =>
+      list.map((a) => (a.id === id ? { ...a, ...patch, id: a.id } : a)),
+    );
+  }
 }

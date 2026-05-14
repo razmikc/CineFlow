@@ -196,6 +196,15 @@ export class CharactersService {
     this.update(characterId, { images, primaryImageId });
   }
 
+  /** Patch an existing reference image — used by the image-editor bridge
+   *  when the user edits an image and applies the result back here. */
+  updateImage(characterId: string, imageId: string, patch: Partial<CharacterImage>): void {
+    const c = this.get(characterId);
+    if (!c) return;
+    const images = c.images.map((i) => (i.id === imageId ? { ...i, ...patch, id: i.id } : i));
+    this.update(characterId, { images });
+  }
+
   generateImages(req: GenerateImageRequest): Observable<CharacterImage[]> {
     const angles: (CameraAngle | undefined)[] = req.multiAngle
       ? req.angles && req.angles.length > 0
