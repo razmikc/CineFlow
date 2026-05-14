@@ -175,6 +175,40 @@
   -webkit-backdrop-filter: blur(14px);
   z-index: 3;
 }
+
+.topbar .system-row { margin-left: auto; }
+
+.section-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: auto;
+  height: 34px;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  text-decoration: none;
+  font-size: 0.8rem;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.section-shortcut:hover { color: var(--text-1); border-color: rgba(139, 92, 246, 0.55); }
+.section-shortcut.active {
+  background: var(--grad-secondary);
+  color: white;
+  border-color: transparent;
+}
+.section-shortcut .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.section-label { white-space: nowrap; }
+@media (max-width: 720px) {
+  .section-label { display: none; }
+  .section-shortcut { padding: 0 0.55rem; }
+}
 .search {
   flex: 1;
   display: flex;

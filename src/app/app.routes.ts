@@ -82,12 +82,26 @@ export const routes: Routes = [
           import('./features/tools/tools.component').then((m) => m.ToolsComponent),
       },
       {
-        path: 'tools/image-generation',
+        path: 'one-shot',
+        loadComponent: () =>
+          import('./features/one-shot/one-shot.component').then((m) => m.OneShotComponent),
+      },
+      {
+        path: 'one-shot/image',
         loadComponent: () =>
           import('./features/tools/image-generation/image-generation.component').then(
             (m) => m.ImageGenerationToolComponent,
           ),
       },
+      {
+        path: 'one-shot/video',
+        loadComponent: () =>
+          import('./features/one-shot/video-generation.component').then(
+            (m) => m.OneShotVideoComponent,
+          ),
+      },
+      // Legacy alias — old image-gen path now lives under One shot.
+      { path: 'tools/image-generation', redirectTo: 'one-shot/image', pathMatch: 'full' },
       {
         path: 'tools/camera-angles',
         loadComponent: () =>

@@ -9,6 +9,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AssetsService } from '../../../core/services/assets.service';
@@ -23,8 +24,9 @@ import {
 } from '../../../core/services/image-editor-bridge.service';
 import { AiModel, Asset } from '../../../core/models/contract.model';
 
-type Mode = 'expand' | 'erase' | 'replace';
+type Mode = 'expand' | 'erase' | 'replace' | 'upscale';
 type ReplaceVariant = 'prompt' | 'image';
+type UpscaleFactor = 2 | 4 | 8;
 type HandleKind = 'move' | 'tl' | 't' | 'tr' | 'r' | 'br' | 'b' | 'bl' | 'l';
 type AspectKey = '1:1' | '16:9' | '9:16' | '4:5' | '2.39:1' | '4:3' | 'free';
 
@@ -62,7 +64,7 @@ const FILL_SAMPLES = [
 
 @Component({
   selector: 'app-image-editor-tool',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, DecimalPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header>
@@ -113,6 +115,10 @@ const FILL_SAMPLES = [
           <strong>✨ Replace</strong>
           <span class="muted">Brush + prompt or reference image</span>
         </button>
+        <button class="mode-tab" type="button" [class.active]="mode() === 'upscale'" (click)="setMode('upscale')">
+          <strong>🔼 Upscale</strong>
+          <span class="muted">2× · 4× · 8× super-resolution</span>
+        </button>
       </div>
 
       <div class="layout">
@@ -125,6 +131,7 @@ const FILL_SAMPLES = [
                   @case ('expand')  { Drag the image to reposition. Drag a handle to resize. Empty area = AI fill. }
                   @case ('erase')   { Brush over anything you want gone. Eraser-tool undoes mask strokes. }
                   @case ('replace') { Brush the area to replace, then describe what should appear (or attach a reference). }
+                  @case ('upscale') { Pick a scale factor — AI super-resolves the whole image. Optional face / detail enhance. }
                 }
               </p>
             </div>
@@ -134,7 +141,7 @@ const FILL_SAMPLES = [
                 <button class="btn ghost sm" type="button" (click)="fillCanvas()">Fill</button>
                 <button class="btn ghost sm" type="button" (click)="centerImage()">Center</button>
               }
-              @if (mode() !== 'expand') {
+              @if (mode() !== 'expand' && mode() !== 'upscale') {
                 <div class="brush-controls">
                   <button class="iconbtn" type="button" [class.active]="brushTool() === 'brush'" (click)="brushTool.set('brush')" title="Brush">
                     <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l3 3-9 9-3 1 1-3 8-10z" stroke-linejoin="round"/></svg>
@@ -152,7 +159,17 @@ const FILL_SAMPLES = [
             </div>
           </div>
 
-          @if (mode() === 'expand') {
+          @if (mode() === 'upscale') {
+            <div class="brush-stage">
+              <img class="brush-img" [src]="sourceUri()" alt="Source" />
+              <div class="upscale-badge">
+                <strong>{{ sourceWidth() }} × {{ sourceHeight() }}</strong>
+                <span>→</span>
+                <strong>{{ sourceWidth() * upscaleFactor() }} × {{ sourceHeight() * upscaleFactor() }}</strong>
+                <span class="chip cyan">{{ upscaleFactor() }}×</span>
+              </div>
+            </div>
+          } @else if (mode() === 'expand') {
             <div class="canvas-stage" #stage [style.aspect-ratio]="stageAspect()">
               <div class="canvas-grid"></div>
               <div
@@ -244,6 +261,46 @@ const FILL_SAMPLES = [
             </p>
           }
 
+          @if (mode() === 'upscale') {
+            <div class="eyebrow">Scale factor</div>
+            <div class="chip-grid compact" style="margin-top: 0.4rem">
+              @for (f of upscaleFactors; track f) {
+                <button
+                  type="button"
+                  class="opt-chip sm"
+                  [class.active]="upscaleFactor() === f"
+                  (click)="upscaleFactor.set(f)"
+                >{{ f }}×</button>
+              }
+            </div>
+            <p class="muted" style="font-size: 0.78rem; margin-top: 0.4rem">
+              Target: <span class="mono">{{ sourceWidth() * upscaleFactor() }} × {{ sourceHeight() * upscaleFactor() }}</span>
+              ({{ targetMegapixels() | number: '1.1-1' }} MP)
+            </p>
+            <label class="check-row" style="margin-top: 0.6rem">
+              <input
+                type="checkbox"
+                [ngModel]="enhanceFaces()"
+                (ngModelChange)="enhanceFaces.set($event)"
+              />
+              <div>
+                <div class="check-title">Enhance faces</div>
+                <div class="muted" style="font-size: 0.76rem">GFPGAN-style face restoration pass.</div>
+              </div>
+            </label>
+            <label class="check-row" style="margin-top: 0.4rem">
+              <input
+                type="checkbox"
+                [ngModel]="enhanceDetail()"
+                (ngModelChange)="enhanceDetail.set($event)"
+              />
+              <div>
+                <div class="check-title">Sharpen detail</div>
+                <div class="muted" style="font-size: 0.76rem">Extra detail-restore pass — slower, higher fidelity.</div>
+              </div>
+            </label>
+          }
+
           @if (mode() === 'replace') {
             <div class="eyebrow">Replace with</div>
             <div class="row" style="gap: 0.4rem; margin-top: 0.4rem">
@@ -301,19 +358,21 @@ const FILL_SAMPLES = [
             <p class="muted" style="font-size: 0.78rem; margin-top: 0.35rem">{{ m.description }}</p>
           }
 
-          <div class="eyebrow" style="margin-top: 1rem">Variations</div>
-          <input
-            type="range"
-            min="1"
-            max="4"
-            step="1"
-            [ngModel]="count()"
-            (ngModelChange)="count.set(+$event)"
-            style="width: 100%; margin-top: 0.4rem"
-          />
-          <div class="row" style="justify-content: space-between; font-size: 0.78rem; color: var(--text-3)">
-            <span>1</span><span class="mono">{{ count() }}</span><span>4</span>
-          </div>
+          @if (mode() !== 'upscale') {
+            <div class="eyebrow" style="margin-top: 1rem">Variations</div>
+            <input
+              type="range"
+              min="1"
+              max="4"
+              step="1"
+              [ngModel]="count()"
+              (ngModelChange)="count.set(+$event)"
+              style="width: 100%; margin-top: 0.4rem"
+            />
+            <div class="row" style="justify-content: space-between; font-size: 0.78rem; color: var(--text-3)">
+              <span>1</span><span class="mono">{{ count() }}</span><span>4</span>
+            </div>
+          }
 
           <button
             class="btn primary"
@@ -321,7 +380,8 @@ const FILL_SAMPLES = [
             (click)="generate()"
             [disabled]="!canGenerate() || running()"
           >
-            @if (running()) { Rendering {{ count() }}… }
+            @if (running()) { Rendering… }
+            @else if (mode() === 'upscale') { {{ generateLabel() }} }
             @else { {{ generateLabel() }} ({{ count() }}) }
           </button>
 
@@ -390,6 +450,22 @@ const FILL_SAMPLES = [
   styles: [
     `
       :host { display: block; }
+
+      .upscale-badge {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(0, 0, 0, 0.65);
+        border: 1px solid rgba(34, 211, 238, 0.5);
+        color: white;
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        font-family: var(--font-mono, monospace);
+        font-size: 0.74rem;
+      }
 
       .edit-context {
         margin-top: 0.8rem;
@@ -795,6 +871,15 @@ export class ImageEditorToolComponent implements AfterViewInit {
   /* Replace state */
   protected readonly replaceRef = signal<ReplaceReference | null>(null);
 
+  /* Upscale state */
+  protected readonly upscaleFactors: UpscaleFactor[] = [2, 4, 8];
+  protected readonly upscaleFactor = signal<UpscaleFactor>(2);
+  protected readonly enhanceFaces = signal(false);
+  protected readonly enhanceDetail = signal(true);
+  protected readonly targetMegapixels = computed(
+    () => (this.sourceWidth() * this.upscaleFactor() * this.sourceHeight() * this.upscaleFactor()) / 1_000_000,
+  );
+
   /* Shared */
   protected readonly prompt = signal('');
   protected readonly modelId = signal('');
@@ -812,6 +897,9 @@ export class ImageEditorToolComponent implements AfterViewInit {
 
   protected readonly availableModels = computed<AiModel[]>(() => {
     const all = this.modelsSrv.models();
+    if (this.mode() === 'upscale') {
+      return all.filter((m) => m.capability === 'upscale');
+    }
     if (this.mode() === 'erase') {
       const primary = all.filter((m) => m.capability === 'remove_object');
       const secondary = all.filter((m) => m.capability === 'inpaint');
@@ -876,6 +964,9 @@ export class ImageEditorToolComponent implements AfterViewInit {
     if (!this.modelId()) return false;
     if (this.sourceEligibility()?.verdict === 'blocked') return false;
 
+    if (this.mode() === 'upscale') {
+      return this.sourceWidth() > 0 && this.sourceHeight() > 0;
+    }
     if (this.mode() === 'expand') {
       return this.hasFillArea();
     }
@@ -893,6 +984,10 @@ export class ImageEditorToolComponent implements AfterViewInit {
     if (this.canGenerate()) return null;
     if (!this.sourceUri()) return 'Upload an image to begin.';
     if (this.sourceEligibility()?.verdict === 'blocked') return 'Source image failed eligibility check.';
+    if (this.mode() === 'upscale') {
+      if (this.sourceWidth() <= 0) return 'Loading image dimensions…';
+      return null;
+    }
     if (this.mode() === 'expand') {
       if (!this.hasFillArea()) return 'Image fully covers the canvas — nothing to fill. Shrink it or change aspect.';
       return null;
@@ -910,6 +1005,7 @@ export class ImageEditorToolComponent implements AfterViewInit {
   protected readonly generateLabel = computed(() => {
     if (this.mode() === 'expand') return 'Expand image';
     if (this.mode() === 'erase') return 'Erase masked area';
+    if (this.mode() === 'upscale') return `Upscale ${this.upscaleFactor()}×`;
     return 'Replace masked area';
   });
 
@@ -1256,12 +1352,15 @@ export class ImageEditorToolComponent implements AfterViewInit {
     const now = Date.now();
     const src = this.sourceUri();
     const ref = this.replaceRef();
-    const queued: ResultImage[] = Array.from({ length: n }, (_, i) => {
+    const isUpscale = this.mode() === 'upscale';
+    const variants = isUpscale ? 1 : n;
+    const queued: ResultImage[] = Array.from({ length: variants }, (_, i) => {
       // Mock results: keep first variation visually similar to source so the
       // user gets a sense of edit continuity; vary the rest.
       const fallback = FILL_SAMPLES[(now + i) % FILL_SAMPLES.length];
-      const seedUri =
-        this.mode() === 'replace' && this.replaceVariant() === 'image' && ref
+      const seedUri = isUpscale
+        ? src ?? fallback
+        : this.mode() === 'replace' && this.replaceVariant() === 'image' && ref
           ? (i % 2 === 0 ? src ?? fallback : ref.uri)
           : i === 0 && src
             ? src
@@ -1271,6 +1370,7 @@ export class ImageEditorToolComponent implements AfterViewInit {
     this.results.set(queued);
     this.running.set(true);
 
+    const totalMs = isUpscale ? 1800 + this.upscaleFactor() * 350 : 1100;
     queued.forEach((item, i) => {
       setTimeout(() => {
         this.results.update((list) =>
@@ -1282,7 +1382,7 @@ export class ImageEditorToolComponent implements AfterViewInit {
           list.map((r) => (r.id === item.id ? { ...r, status: 'ready' } : r)),
         );
         if (i === queued.length - 1) this.running.set(false);
-      }, 1100 + i * 240);
+      }, totalMs + i * 240);
     });
   }
 
@@ -1345,6 +1445,13 @@ export class ImageEditorToolComponent implements AfterViewInit {
       return `expanded-${aspectLabel}`;
     }
     if (this.mode() === 'erase') return 'erased';
+    if (this.mode() === 'upscale') {
+      const enhance = [
+        this.enhanceFaces() ? 'faces' : '',
+        this.enhanceDetail() ? 'detail' : '',
+      ].filter(Boolean).join('+');
+      return enhance ? `upscaled-${this.upscaleFactor()}x-${enhance}` : `upscaled-${this.upscaleFactor()}x`;
+    }
     return this.replaceVariant() === 'prompt' ? 'replaced-prompt' : 'replaced-ref';
   }
 }

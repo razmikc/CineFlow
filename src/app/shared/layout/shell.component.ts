@@ -89,7 +89,20 @@ interface NavItem {
             <input placeholder="Search projects, scenes, assets, models…"/>
             <span class="kbd">⌘K</span>
           </div>
-          <div class="row">
+          <div class="row section-row">
+            @for (s of sectionShortcuts; track s.path) {
+              <a
+                class="iconbtn section-shortcut"
+                [routerLink]="s.path"
+                routerLinkActive="active"
+                [title]="s.label"
+              >
+                <span class="nav-icon" [innerHTML]="s.icon"></span>
+                <span class="section-label">{{ s.label }}</span>
+              </a>
+            }
+          </div>
+          <div class="row system-row">
             <button class="iconbtn" title="Notifications">
               <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M5 8a5 5 0 0 1 10 0v4l1.5 2.5h-13L5 12V8Z" stroke-linejoin="round"/>
@@ -136,10 +149,15 @@ export class ShellComponent {
       ],
     },
     {
+      title: 'One shot',
+      items: [
+        { label: 'Image', path: '/one-shot/image', icon: this.icon('imagegen') },
+        { label: 'Video', path: '/one-shot/video', icon: this.icon('video') },
+      ],
+    },
+    {
       title: 'Tools',
       items: [
-        { label: 'All tools', path: '/tools', icon: this.icon('tools') },
-        { label: 'Image generation', path: '/tools/image-generation', icon: this.icon('imagegen') },
         { label: 'Camera angles', path: '/tools/camera-angles', icon: this.icon('camera') },
         { label: 'Skin enhancer', path: '/tools/skin-enhancer', icon: this.icon('sparkle') },
         { label: 'Image editor', path: '/tools/image-editor', icon: this.icon('editor') },
@@ -148,6 +166,12 @@ export class ShellComponent {
         { label: 'Eligibility check', path: '/tools/eligibility', icon: this.icon('shield') },
       ],
     },
+  ];
+
+  /** Section landing pages surfaced in the topbar as icon buttons. */
+  protected readonly sectionShortcuts: NavItem[] = [
+    { label: 'One shot', path: '/one-shot', icon: this.icon('oneshot') },
+    { label: 'All tools', path: '/tools', icon: this.icon('tools') },
   ];
 
   constructor(public readonly projects: ProjectsService) {}
@@ -173,6 +197,7 @@ export class ShellComponent {
       audio: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8v4M7 5v10M11 7v6M15 4v12M19 9v2" stroke-linecap="round"/></svg>`,
       video: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="11" height="10" rx="1.5"/><path d="M13.5 9l4-2v6l-4-2z" stroke-linejoin="round"/></svg>`,
       draft: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 3h7l4 4v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/><path d="M12 3v4h4M8 12l2 2 3-4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      oneshot: `<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8 L10 2 L17 8 L17 17 L3 17 Z" stroke-linejoin="round"/><circle cx="10" cy="12" r="3"/><path d="M10 12 L13 9" stroke-linecap="round"/></svg>`,
     };
     return map[kind] ?? '';
   }

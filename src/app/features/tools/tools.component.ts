@@ -126,15 +126,6 @@ interface ToolCard {
 export class ToolsComponent {
   protected readonly tools: ToolCard[] = [
     {
-      path: 'image-generation',
-      title: 'Image generation',
-      tagline: 'Text + reference → image',
-      description:
-        'Generate stills from a text prompt, reference images, or both. Pick the model, add references from your asset library or computer, render up to 4 variations.',
-      accent: 'violet',
-      emoji: '🖼️',
-    },
-    {
       path: 'camera-angles',
       title: 'Camera angle generator',
       tagline: 'Multi-view shots',
@@ -155,9 +146,9 @@ export class ToolsComponent {
     {
       path: 'image-editor',
       title: 'Image editor',
-      tagline: 'Expand · Erase · Replace',
+      tagline: 'Expand · Erase · Replace · Upscale',
       description:
-        'One canvas, three modes. Resize the frame and let AI fill it, erase an object cleanly, or replace it with a prompt or reference image — chain edits without re-uploading.',
+        'One canvas, four modes. Resize the frame and let AI fill it, erase an object cleanly, replace it with a prompt or reference image, or upscale 2× / 4× / 8× — chain edits without re-uploading.',
       accent: 'cyan',
       emoji: '🛠️',
     },

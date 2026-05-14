@@ -62,13 +62,13 @@ const SAMPLE_OUTPUTS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header>
-      <a routerLink="/tools" class="btn ghost sm" style="margin-bottom: 0.5rem">
+      <a routerLink="/one-shot" class="btn ghost sm" style="margin-bottom: 0.5rem">
         <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 5l-5 5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Back to tools
+        Back to One shot
       </a>
-      <h1>Image generation</h1>
+      <h1>One-shot image</h1>
       <p class="muted" style="margin-top: 0.4rem; max-width: 64ch">
         Generate stills from a text prompt, reference images, or both. Pick the model that fits the look,
         add references from your asset library or local computer, and render up to 4 variations.
