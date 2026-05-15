@@ -197,14 +197,14 @@ const VARIANT_STYLES: { style: VariantStyle; label: string; description: string;
         border-radius: 14px;
         background-position: center;
         background-size: cover;
-        background-color: rgba(255, 255, 255, 0.03);
+        background-color: rgba(var(--wash-rgb), 0.03);
         border: 1px solid var(--border);
       }
       .dropzone {
         width: 100%;
         height: 220px;
         margin-top: 0.6rem;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(var(--wash-rgb), 0.02);
         border: 1.5px dashed var(--border-strong);
         border-radius: 14px;
         color: var(--text-2);
@@ -227,7 +227,7 @@ const VARIANT_STYLES: { style: VariantStyle; label: string; description: string;
         position: relative;
         padding: 0;
         border: 1.5px solid var(--border);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--wash-rgb), 0.03);
         border-radius: 14px;
         overflow: hidden;
         text-align: left;
@@ -242,7 +242,7 @@ const VARIANT_STYLES: { style: VariantStyle; label: string; description: string;
         aspect-ratio: 1 / 1.1;
         background-position: center;
         background-size: cover;
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: rgba(var(--wash-rgb), 0.04);
         position: relative;
       }
       .variant-meta { padding: 0.65rem 0.75rem 0.8rem; }
@@ -272,7 +272,7 @@ const VARIANT_STYLES: { style: VariantStyle; label: string; description: string;
         padding: 0.55rem 0.7rem;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--wash-rgb), 0.03);
       }
       .elig.verdict-blocked { border-color: rgba(251, 113, 133, 0.5); background: rgba(251, 113, 133, 0.08); }
       .elig.verdict-warning { border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.08); }
@@ -292,14 +292,14 @@ const VARIANT_STYLES: { style: VariantStyle; label: string; description: string;
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        background: rgba(5, 6, 19, 0.65);
+        background: rgba(var(--deep-rgb), 0.65);
         color: var(--text-2);
         font-size: 0.78rem;
       }
       .loader {
         width: 16px;
         height: 16px;
-        border: 2px solid rgba(255, 255, 255, 0.18);
+        border: 2px solid rgba(var(--wash-rgb), 0.18);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;

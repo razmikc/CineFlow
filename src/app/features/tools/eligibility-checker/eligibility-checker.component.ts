@@ -124,7 +124,7 @@ interface QueueItem {
         margin-top: 0.8rem;
         width: 100%;
         height: 180px;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(var(--wash-rgb), 0.02);
         border: 1.5px dashed var(--border-strong);
         border-radius: 14px;
         color: var(--text-2);
@@ -153,7 +153,7 @@ interface QueueItem {
       .thumb {
         background-position: center;
         background-size: cover;
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: rgba(var(--wash-rgb), 0.04);
         min-height: 180px;
       }
       .body { padding: 0.9rem 1rem 1rem; }
@@ -169,7 +169,7 @@ interface QueueItem {
         padding: 0.55rem 0.7rem;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
       }
       .rule-dot {
         flex-shrink: 0;
@@ -190,7 +190,7 @@ interface QueueItem {
       .loader {
         width: 14px;
         height: 14px;
-        border: 2px solid rgba(255, 255, 255, 0.18);
+        border: 2px solid rgba(var(--wash-rgb), 0.18);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;

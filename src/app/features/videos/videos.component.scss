@@ -37,7 +37,7 @@
   display: flex;
   flex-direction: column;
   text-align: left;
-  background: rgba(10, 13, 35, 0.45);
+  background: rgba(var(--surface-rgb), 0.45);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 0;
@@ -107,7 +107,7 @@
 
 .format-toggle {
   display: inline-flex;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--wash-rgb), 0.04);
   border-radius: 999px;
   padding: 3px;
   border: 1px solid var(--border);

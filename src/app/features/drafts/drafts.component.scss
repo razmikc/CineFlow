@@ -30,7 +30,7 @@
 .draft-card {
   display: flex;
   flex-direction: column;
-  background: rgba(10, 13, 35, 0.45);
+  background: rgba(var(--surface-rgb), 0.45);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   overflow: hidden;

@@ -53,7 +53,7 @@ interface Card {
       .tool-card::before { content: ''; position: absolute; inset: -50% -30% auto auto; width: 220px; height: 220px; border-radius: 50%; pointer-events: none; opacity: 0.5; filter: blur(40px); }
       .tool-card[data-accent='violet']::before { background: rgba(139, 92, 246, 0.35); }
       .tool-card[data-accent='cyan']::before   { background: rgba(34, 211, 238, 0.28); }
-      .tool-icon { font-size: 1.8rem; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); }
+      .tool-icon { font-size: 1.8rem; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: rgba(var(--wash-rgb), 0.05); border: 1px solid var(--border); }
       .tool-title { font-size: 1.15rem; margin-top: 0.25rem; }
       .tool-desc { font-size: 0.86rem; color: var(--text-2); margin-top: 0.45rem; line-height: 1.45; }
       .tool-cta { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.85rem; font-weight: 600; color: var(--neon-cyan); margin-top: auto; }

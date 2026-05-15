@@ -5,7 +5,7 @@ h1 { font-size: 1.75rem; }
   padding: 0.45rem 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--wash-rgb), 0.03);
   color: var(--text-2);
   cursor: pointer;
   font-size: 0.82rem;

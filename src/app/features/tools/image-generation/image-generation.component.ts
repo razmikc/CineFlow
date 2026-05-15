@@ -311,7 +311,7 @@ const SAMPLE_OUTPUTS = [
         padding: 0.4rem 0.8rem;
         border-radius: 999px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--wash-rgb), 0.03);
         color: var(--text-2);
         cursor: pointer;
         font-size: 0.78rem;
@@ -333,7 +333,7 @@ const SAMPLE_OUTPUTS = [
         border: 1px solid var(--border);
         border-radius: 10px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         display: flex;
         flex-direction: column;
       }
@@ -344,7 +344,7 @@ const SAMPLE_OUTPUTS = [
         aspect-ratio: 1 / 1;
         background-size: cover;
         background-position: center;
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: rgba(var(--wash-rgb), 0.04);
       }
       .ref-meta {
         padding: 0.35rem 0.45rem;
@@ -362,7 +362,7 @@ const SAMPLE_OUTPUTS = [
         position: absolute;
         top: 0.35rem;
         right: 0.35rem;
-        background: rgba(5, 6, 19, 0.8);
+        background: rgba(var(--deep-rgb), 0.8);
         backdrop-filter: blur(6px);
       }
       .ref-add {
@@ -400,7 +400,7 @@ const SAMPLE_OUTPUTS = [
         padding: 0.4rem 0.6rem;
         border-radius: 8px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         color: var(--text-1);
         font-size: 0.78rem;
         cursor: pointer;
@@ -433,14 +433,14 @@ const SAMPLE_OUTPUTS = [
         border: 1px solid var(--border);
         border-radius: 12px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
       }
       .result-thumb {
         position: relative;
         aspect-ratio: 1 / 1;
         background-size: cover;
         background-position: center;
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: rgba(var(--wash-rgb), 0.05);
       }
       .result-overlay {
         position: absolute;
@@ -450,7 +450,7 @@ const SAMPLE_OUTPUTS = [
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        background: rgba(5, 6, 19, 0.65);
+        background: rgba(var(--deep-rgb), 0.65);
         color: var(--text-2);
         font-size: 0.8rem;
       }
@@ -476,7 +476,7 @@ const SAMPLE_OUTPUTS = [
       .modal-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(5, 6, 19, 0.78);
+        background: rgba(var(--deep-rgb), 0.78);
         backdrop-filter: blur(6px);
         display: flex;
         align-items: center;
@@ -531,7 +531,7 @@ const SAMPLE_OUTPUTS = [
         display: inline-block;
         width: 8px;
         height: 8px;
-        border: 1.5px solid rgba(255, 255, 255, 0.2);
+        border: 1.5px solid rgba(var(--wash-rgb), 0.2);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
@@ -541,7 +541,7 @@ const SAMPLE_OUTPUTS = [
       .loader {
         width: 18px;
         height: 18px;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(var(--wash-rgb), 0.2);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;

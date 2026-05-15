@@ -186,7 +186,7 @@ interface PendingEdits {
     `
       :host { display: contents; }
       .overlay { position: fixed; inset: 0; background: rgba(2, 4, 14, 0.7); backdrop-filter: blur(6px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-      .dialog { width: min(900px, 100%); max-height: 92vh; display: flex; flex-direction: column; background: rgba(10, 13, 35, 0.96); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
+      .dialog { width: min(900px, 100%); max-height: 92vh; display: flex; flex-direction: column; background: rgba(var(--surface-rgb), 0.96); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,0.45); }
       .head { padding: 1rem 1.2rem; display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; border-bottom: 1px solid var(--border); }
       .head h2 { margin: 0.3rem 0 0.2rem; font-family: var(--font-display); font-size: 1.1rem; }
       .head .muted { margin: 0; font-size: 0.78rem; max-width: 64ch; line-height: 1.45; }
@@ -196,7 +196,7 @@ interface PendingEdits {
       .body { padding: 0.7rem 1rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 0.7rem; min-height: 0; }
       .body.center { align-items: center; justify-content: center; padding: 3rem 1rem; text-align: center; }
 
-      .det-card { display: grid; grid-template-columns: 220px 1fr; gap: 0.9rem; padding: 0.7rem; background: rgba(10,13,35,0.55); border: 1px solid var(--border); border-radius: 12px; }
+      .det-card { display: grid; grid-template-columns: 220px 1fr; gap: 0.9rem; padding: 0.7rem; background: rgba(var(--surface-rgb),0.55); border: 1px solid var(--border); border-radius: 12px; }
       .det-card.saved { border-color: rgba(52,211,153,0.55); background: rgba(52,211,153,0.07); }
       .det-card.rejected { opacity: 0.5; }
 
@@ -208,7 +208,7 @@ interface PendingEdits {
 
       .det-form { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
       .det-form .field { font-size: 0.74rem; color: var(--text-2); display: flex; flex-direction: column; gap: 3px; }
-      .det-form input, .det-form textarea { background: rgba(10,13,35,0.6); border: 1px solid var(--border); border-radius: 6px; padding: 0.38rem 0.55rem; color: var(--text-1); font-size: 0.86rem; font-family: inherit; resize: vertical; }
+      .det-form input, .det-form textarea { background: rgba(var(--surface-rgb),0.6); border: 1px solid var(--border); border-radius: 6px; padding: 0.38rem 0.55rem; color: var(--text-1); font-size: 0.86rem; font-family: inherit; resize: vertical; }
       .det-form input:focus, .det-form textarea:focus { outline: none; border-color: rgba(139, 92, 246, 0.55); }
       .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; }
       .det-actions { justify-content: flex-end; margin-top: 0.2rem; gap: 0.4rem; }
@@ -216,7 +216,7 @@ interface PendingEdits {
 
       .det-saved, .det-rejected { display: flex; flex-direction: column; justify-content: center; padding: 0.5rem; }
 
-      .foot { padding: 0.7rem 1.1rem 0.9rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; flex-wrap: wrap; background: rgba(10,13,35,0.7); }
+      .foot { padding: 0.7rem 1.1rem 0.9rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; flex-wrap: wrap; background: rgba(var(--surface-rgb),0.7); }
       .foot .row { display: flex; gap: 0.4rem; }
       .chip.cyan { background: rgba(34,211,238,0.18); color: var(--neon-cyan, #22d3ee); padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; }
     `,

@@ -14,7 +14,7 @@ h1 { font-size: 1.75rem; }
   padding: 0.55rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: rgba(10, 13, 35, 0.6);
+  background: rgba(var(--surface-rgb), 0.6);
   flex: 1;
   max-width: 400px;
   color: var(--text-3);
@@ -37,7 +37,7 @@ h1 { font-size: 1.75rem; }
   padding: 0.45rem 0.85rem;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--wash-rgb), 0.03);
   color: var(--text-2);
   cursor: pointer;
   font-size: 0.82rem;

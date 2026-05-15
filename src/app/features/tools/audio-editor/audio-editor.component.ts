@@ -301,7 +301,7 @@ interface Mark {
       .dropzone {
         width: 100%;
         height: 260px;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(var(--wash-rgb), 0.02);
         border: 1.5px dashed var(--border-strong);
         border-radius: 14px;
         color: var(--text-2);
@@ -331,7 +331,7 @@ interface Mark {
         flex-wrap: wrap;
         margin-top: 0.5rem;
         padding: 0.5rem 0.6rem;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         border: 1px solid var(--border);
         border-radius: 10px;
       }
@@ -342,7 +342,7 @@ interface Mark {
         gap: 0.4rem;
         width: 36px;
         height: 36px;
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(var(--wash-rgb), 0.05);
         border: 1px solid var(--border);
         border-radius: 8px;
         color: var(--text-1);
@@ -375,7 +375,7 @@ interface Mark {
         position: relative;
         height: 84px;
         background:
-          repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0 2px, transparent 2px 6px),
+          repeating-linear-gradient(90deg, rgba(var(--wash-rgb), 0.04) 0 2px, transparent 2px 6px),
           rgba(0, 0, 0, 0.4);
         border: 1px solid var(--border);
         border-radius: 10px;
@@ -401,7 +401,7 @@ interface Mark {
         font-family: var(--font-mono);
         font-size: 0.74rem;
         color: var(--text-1);
-        background: rgba(5, 6, 19, 0.72);
+        background: rgba(var(--deep-rgb), 0.72);
         padding: 0.15rem 0.5rem;
         border-radius: 999px;
         pointer-events: none;
@@ -438,7 +438,7 @@ interface Mark {
       }
 
       .toggle-grid { display: grid; grid-template-columns: 1fr; gap: 0.45rem; margin-top: 0.6rem; }
-      .toggle-card { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; background: rgba(10,13,35,0.55); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; text-align: left; color: var(--text-1); transition: border-color 0.15s, background 0.15s; }
+      .toggle-card { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; background: rgba(var(--surface-rgb),0.55); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; text-align: left; color: var(--text-1); transition: border-color 0.15s, background 0.15s; }
       .toggle-card:hover { border-color: rgba(139, 92, 246, 0.55); }
       .toggle-card.on { border-color: rgba(52, 211, 153, 0.55); background: rgba(52, 211, 153, 0.07); }
       .toggle-icon { font-size: 1.15rem; line-height: 1; opacity: 0.85; }
@@ -446,7 +446,7 @@ interface Mark {
       .toggle-body { min-width: 0; }
       .toggle-title { font-size: 0.86rem; font-weight: 600; line-height: 1.25; }
       .toggle-hint { font-size: 0.74rem; color: var(--text-2); line-height: 1.4; margin-top: 2px; }
-      .toggle-switch { position: relative; width: 38px; height: 22px; border-radius: 999px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); transition: background 0.18s, border-color 0.18s; flex-shrink: 0; }
+      .toggle-switch { position: relative; width: 38px; height: 22px; border-radius: 999px; background: rgba(var(--wash-rgb), 0.1); border: 1px solid var(--border); transition: background 0.18s, border-color 0.18s; flex-shrink: 0; }
       .toggle-switch[data-state='on'] { background: linear-gradient(135deg, #34d399, #22d3ee); border-color: transparent; }
       .toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #f8fafc; box-shadow: 0 1px 3px rgba(0,0,0,0.35); transition: transform 0.18s; }
       .toggle-switch[data-state='on'] .toggle-knob { transform: translateX(16px); }
@@ -489,7 +489,7 @@ interface Mark {
         padding: 0.4rem 0.6rem;
         border-radius: 8px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         color: var(--text-1);
         font-size: 0.78rem;
         cursor: pointer;
@@ -510,7 +510,7 @@ interface Mark {
 
       .modal-backdrop {
         position: fixed; inset: 0;
-        background: rgba(5, 6, 19, 0.78);
+        background: rgba(var(--deep-rgb), 0.78);
         backdrop-filter: blur(6px);
         display: flex; align-items: center; justify-content: center;
         z-index: 10; padding: 1rem;
@@ -532,7 +532,7 @@ interface Mark {
         display: flex;
         align-items: center;
         gap: 0.7rem;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(var(--wash-rgb), 0.02);
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 0.6rem 0.75rem;

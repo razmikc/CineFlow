@@ -250,7 +250,7 @@ const FILL_SAMPLES = [
         margin-top: 0.7rem;
         width: 100%;
         height: 360px;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(var(--wash-rgb), 0.02);
         border: 1.5px dashed var(--border-strong);
         border-radius: 14px;
         color: var(--text-2);
@@ -277,10 +277,10 @@ const FILL_SAMPLES = [
         position: absolute;
         inset: 0;
         background-image:
-          linear-gradient(45deg, rgba(255,255,255,0.045) 25%, transparent 25%),
-          linear-gradient(-45deg, rgba(255,255,255,0.045) 25%, transparent 25%),
-          linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.045) 75%),
-          linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.045) 75%);
+          linear-gradient(45deg, rgba(var(--wash-rgb), 0.045) 25%, transparent 25%),
+          linear-gradient(-45deg, rgba(var(--wash-rgb), 0.045) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, rgba(var(--wash-rgb), 0.045) 75%),
+          linear-gradient(-45deg, transparent 75%, rgba(var(--wash-rgb), 0.045) 75%);
         background-size: 18px 18px;
         background-position: 0 0, 0 9px, 9px -9px, -9px 0;
       }
@@ -298,7 +298,7 @@ const FILL_SAMPLES = [
       .canvas-outline {
         position: absolute;
         inset: 0;
-        border: 1.5px dashed rgba(255, 255, 255, 0.18);
+        border: 1.5px dashed rgba(var(--wash-rgb), 0.18);
         border-radius: 12px;
         pointer-events: none;
       }
@@ -308,7 +308,7 @@ const FILL_SAMPLES = [
         width: 12px;
         height: 12px;
         background: var(--neon-cyan);
-        border: 1.5px solid rgba(5, 6, 19, 0.85);
+        border: 1.5px solid rgba(var(--deep-rgb), 0.85);
         border-radius: 2px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
         touch-action: none;
@@ -329,7 +329,7 @@ const FILL_SAMPLES = [
         align-items: center;
         margin-top: 0.7rem;
         padding: 0.55rem 0.7rem;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         border: 1px solid var(--border);
         border-radius: 10px;
       }
@@ -343,7 +343,7 @@ const FILL_SAMPLES = [
         padding: 0.4rem 0.6rem;
         border-radius: 8px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         color: var(--text-1);
         font-size: 0.78rem;
         cursor: pointer;
@@ -359,7 +359,7 @@ const FILL_SAMPLES = [
         padding: 0.55rem 0.7rem;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--wash-rgb), 0.03);
       }
       .elig.verdict-blocked { border-color: rgba(251, 113, 133, 0.5); background: rgba(251, 113, 133, 0.08); }
       .elig.verdict-warning { border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.08); }
@@ -377,7 +377,7 @@ const FILL_SAMPLES = [
         flex: 1;
         background-size: cover;
         background-position: center;
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: rgba(var(--wash-rgb), 0.05);
       }
       .result-overlay {
         position: absolute;
@@ -387,7 +387,7 @@ const FILL_SAMPLES = [
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        background: rgba(5, 6, 19, 0.65);
+        background: rgba(var(--deep-rgb), 0.65);
         color: var(--text-2);
         font-size: 0.8rem;
       }
@@ -401,7 +401,7 @@ const FILL_SAMPLES = [
       .loader {
         width: 18px;
         height: 18px;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(var(--wash-rgb), 0.2);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;

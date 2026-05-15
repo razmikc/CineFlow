@@ -43,7 +43,7 @@
 }
 
 .mb-card {
-  background: rgba(10, 13, 35, 0.4);
+  background: rgba(var(--surface-rgb), 0.4);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   padding: 1.2rem 1.4rem;
@@ -152,7 +152,7 @@
   grid-template-columns: 200px 1fr;
   gap: 1rem;
   padding: 0.85rem;
-  background: rgba(10, 13, 35, 0.55);
+  background: rgba(var(--surface-rgb), 0.55);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   transition: border-color 0.15s;
@@ -249,7 +249,7 @@
 .sp-title-input:focus {
   border-color: rgba(139, 92, 246, 0.55);
   outline: none;
-  background: rgba(10, 13, 35, 0.6);
+  background: rgba(var(--surface-rgb), 0.6);
 }
 
 .sp-duration-edit {
@@ -263,7 +263,7 @@
     padding: 0.2rem 0.35rem;
     font-size: 0.82rem;
     text-align: right;
-    background: rgba(10, 13, 35, 0.55);
+    background: rgba(var(--surface-rgb), 0.55);
     border: 1px solid var(--border);
     border-radius: var(--r-sm, 6px);
     color: var(--text-1);
@@ -281,7 +281,7 @@
   input {
     width: 100%;
     margin-top: 0.2rem;
-    background: rgba(10, 13, 35, 0.55);
+    background: rgba(var(--surface-rgb), 0.55);
     border: 1px solid var(--border);
     border-radius: var(--r-sm, 6px);
     padding: 0.45rem 0.6rem;

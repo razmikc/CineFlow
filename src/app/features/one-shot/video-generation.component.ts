@@ -286,7 +286,7 @@ const ASPECTS: { value: string; label: string }[] = [
       .frames { display: flex; align-items: stretch; gap: 0.6rem; margin-top: 0.5rem; }
       .frame-slot { flex: 1; display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
       .frame-label { font-size: 0.74rem; color: var(--text-2); }
-      .frame-drop { width: 100%; aspect-ratio: 16/9; border: 1.5px dashed var(--border-strong); border-radius: 12px; background: rgba(255,255,255,0.02); color: var(--text-2); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; font-size: 0.82rem; }
+      .frame-drop { width: 100%; aspect-ratio: 16/9; border: 1.5px dashed var(--border-strong); border-radius: 12px; background: rgba(var(--wash-rgb), 0.02); color: var(--text-2); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.3rem; font-size: 0.82rem; }
       .frame-drop:hover { border-color: rgba(139, 92, 246, 0.6); color: var(--text-1); }
       .frame-tile { position: relative; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
       .frame-tile.verdict-blocked { border-color: rgba(255, 107, 138, 0.6); }
@@ -309,7 +309,7 @@ const ASPECTS: { value: string; label: string }[] = [
       .chip.green { background: rgba(52, 211, 153, 0.18); color: #34d399; }
       .chip.amber { background: rgba(251, 191, 36, 0.18); color: #fbbf24; }
       .chip.rose  { background: rgba(255, 107, 138, 0.2); color: #ff6b8a; }
-      .chip.muted { background: rgba(255,255,255,0.06); color: var(--text-2); }
+      .chip.muted { background: rgba(var(--wash-rgb), 0.06); color: var(--text-2); }
       .loader-xs { width: 10px; height: 10px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
     `,

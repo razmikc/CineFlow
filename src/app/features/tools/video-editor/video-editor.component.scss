@@ -91,12 +91,12 @@ $track-gap-px: 6;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(10, 13, 35, 0.45);
+  background: rgba(var(--surface-rgb), 0.45);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 0.4rem 0.6rem;
 }
-.transport-bar .iconbtn { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: 8px; width: 30px; height: 30px; color: var(--text-1); cursor: pointer; }
+.transport-bar .iconbtn { background: rgba(var(--wash-rgb), 0.05); border: 1px solid var(--border); border-radius: 8px; width: 30px; height: 30px; color: var(--text-1); cursor: pointer; }
 .transport-bar .iconbtn:hover { border-color: rgba(139, 92, 246, 0.55); }
 .transport-bar .scrub { flex: 1; }
 .zoom-block { display: inline-flex; align-items: center; gap: 0.4rem; margin-left: auto; }
@@ -105,7 +105,7 @@ $track-gap-px: 6;
 .side-panel {
   display: flex;
   flex-direction: column;
-  background: rgba(10, 13, 35, 0.45);
+  background: rgba(var(--surface-rgb), 0.45);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 0.7rem;
@@ -115,7 +115,7 @@ $track-gap-px: 6;
 
 .tabs {
   display: inline-flex;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--wash-rgb), 0.04);
   border-radius: 999px;
   padding: 3px;
   border: 1px solid var(--border);
@@ -170,7 +170,7 @@ $track-gap-px: 6;
   gap: 0.5rem;
   align-items: center;
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--wash-rgb), 0.1);
   cursor: grab;
   box-shadow: inset 0 0 0 100vw rgba(0, 0, 0, 0.35);
 }
@@ -202,7 +202,7 @@ $track-gap-px: 6;
   }
   input {
     flex: 1;
-    background: rgba(10, 13, 35, 0.55);
+    background: rgba(var(--surface-rgb), 0.55);
     border: 1px solid var(--border);
     border-radius: var(--r-sm, 6px);
     padding: 0.4rem 0.55rem;
@@ -238,12 +238,12 @@ $track-gap-px: 6;
   gap: 0.4rem;
   padding: 0.25rem 0.4rem;
   border-radius: var(--r-sm, 6px);
-  background: rgba(10, 13, 35, 0.55);
+  background: rgba(var(--surface-rgb), 0.55);
   border: 1px solid var(--border);
 }
 
 .timeline-wrap {
-  background: rgba(10, 13, 35, 0.45);
+  background: rgba(var(--surface-rgb), 0.45);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   padding: 0.5rem 0;
@@ -296,8 +296,8 @@ $track-gap-px: 6;
   background:
     repeating-linear-gradient(
       to right,
-      rgba(255, 255, 255, 0.02) 0px,
-      rgba(255, 255, 255, 0.02) 1px,
+      rgba(var(--wash-rgb), 0.02) 0px,
+      rgba(var(--wash-rgb), 0.02) 1px,
       transparent 1px,
       transparent 40px
     );
@@ -314,7 +314,7 @@ $track-gap-px: 6;
   top: 0;
   height: 100%;
   width: 1px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(var(--wash-rgb), 0.12);
 
   span {
     position: absolute;
@@ -329,7 +329,7 @@ $track-gap-px: 6;
 
 .track-row {
   position: relative;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid rgba(var(--wash-rgb), 0.04);
   margin-bottom: #{$track-gap-px}px;
 }
 
@@ -348,7 +348,7 @@ $track-gap-px: 6;
   top: 4px;
   bottom: 4px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--wash-rgb), 0.1);
   cursor: grab;
   color: white;
   overflow: hidden;

@@ -289,7 +289,7 @@ const FILL_SAMPLES = [
         margin-top: 0.7rem;
         width: 100%;
         height: 360px;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(var(--wash-rgb), 0.02);
         border: 1.5px dashed var(--border-strong);
         border-radius: 14px;
         color: var(--text-2);
@@ -339,7 +339,7 @@ const FILL_SAMPLES = [
         align-items: center;
         margin-top: 0.7rem;
         padding: 0.55rem 0.7rem;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         border: 1px solid var(--border);
         border-radius: 10px;
       }
@@ -359,7 +359,7 @@ const FILL_SAMPLES = [
         padding: 0.4rem 0.8rem;
         border-radius: 999px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--wash-rgb), 0.03);
         color: var(--text-2);
         cursor: pointer;
         font-size: 0.78rem;
@@ -377,7 +377,7 @@ const FILL_SAMPLES = [
         border: 1px solid var(--border);
         border-radius: 10px;
         overflow: hidden;
-        background: rgba(255, 255, 255, 0.025);
+        background: rgba(var(--wash-rgb), 0.025);
         display: grid;
         grid-template-columns: 120px 1fr;
       }
@@ -388,7 +388,7 @@ const FILL_SAMPLES = [
         aspect-ratio: 1 / 1;
         background-size: cover;
         background-position: center;
-        background-color: rgba(255, 255, 255, 0.04);
+        background-color: rgba(var(--wash-rgb), 0.04);
       }
       .ref-meta {
         padding: 0.55rem 0.7rem;
@@ -407,7 +407,7 @@ const FILL_SAMPLES = [
         position: absolute;
         top: 0.4rem;
         right: 0.4rem;
-        background: rgba(5, 6, 19, 0.8);
+        background: rgba(var(--deep-rgb), 0.8);
         backdrop-filter: blur(6px);
       }
 
@@ -416,7 +416,7 @@ const FILL_SAMPLES = [
         padding: 0.55rem 0.7rem;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: rgba(255, 255, 255, 0.03);
+        background: rgba(var(--wash-rgb), 0.03);
       }
       .elig.verdict-blocked { border-color: rgba(251, 113, 133, 0.5); background: rgba(251, 113, 133, 0.08); }
       .elig.verdict-warning { border-color: rgba(251, 191, 36, 0.45); background: rgba(251, 191, 36, 0.08); }
@@ -433,7 +433,7 @@ const FILL_SAMPLES = [
         aspect-ratio: 1 / 1;
         background-size: cover;
         background-position: center;
-        background-color: rgba(255, 255, 255, 0.05);
+        background-color: rgba(var(--wash-rgb), 0.05);
       }
       .result-overlay {
         position: absolute;
@@ -443,7 +443,7 @@ const FILL_SAMPLES = [
         align-items: center;
         justify-content: center;
         gap: 0.4rem;
-        background: rgba(5, 6, 19, 0.65);
+        background: rgba(var(--deep-rgb), 0.65);
         color: var(--text-2);
         font-size: 0.8rem;
       }
@@ -457,7 +457,7 @@ const FILL_SAMPLES = [
       .modal-backdrop {
         position: fixed;
         inset: 0;
-        background: rgba(5, 6, 19, 0.78);
+        background: rgba(var(--deep-rgb), 0.78);
         backdrop-filter: blur(6px);
         display: flex;
         align-items: center;
@@ -511,7 +511,7 @@ const FILL_SAMPLES = [
         display: inline-block;
         width: 8px;
         height: 8px;
-        border: 1.5px solid rgba(255, 255, 255, 0.2);
+        border: 1.5px solid rgba(var(--wash-rgb), 0.2);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;
@@ -521,7 +521,7 @@ const FILL_SAMPLES = [
       .loader {
         width: 18px;
         height: 18px;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+        border: 2px solid rgba(var(--wash-rgb), 0.2);
         border-top-color: var(--neon-cyan);
         border-radius: 50%;
         animation: spin 0.8s linear infinite;

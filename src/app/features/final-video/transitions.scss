@@ -103,7 +103,7 @@
   align-items: stretch;
   gap: 0.35rem;
   padding: 0;
-  background: rgba(10, 13, 35, 0.4);
+  background: rgba(var(--surface-rgb), 0.4);
   border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ProjectsService } from '../../core/services/projects.service';
+import { THEME_OPTIONS, ThemeMode, ThemeService } from '../../core/services/theme.service';
 
 interface NavItem {
   label: string;
@@ -109,12 +110,35 @@ interface NavItem {
                 <path d="M8 16a2 2 0 0 0 4 0"/>
               </svg>
             </button>
-            <button class="iconbtn" title="Settings">
-              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="10" cy="10" r="2.5"/>
-                <path d="M10 1.5v3M10 15.5v3M1.5 10h3M15.5 10h3M3.8 3.8l2.1 2.1M14.1 14.1l2.1 2.1M3.8 16.2l2.1-2.1M14.1 5.9l2.1-2.1" stroke-linecap="round"/>
-              </svg>
-            </button>
+            <div class="theme-picker" (click)="$event.stopPropagation()">
+              <button
+                class="iconbtn"
+                type="button"
+                title="Theme"
+                [class.active]="themeMenuOpen()"
+                (click)="themeMenuOpen.set(!themeMenuOpen())"
+              >{{ activeThemeEmoji() }}</button>
+              @if (themeMenuOpen()) {
+                <div class="theme-menu">
+                  <div class="theme-menu-title">Theme</div>
+                  @for (t of themes; track t.id) {
+                    <button
+                      type="button"
+                      class="theme-option"
+                      [class.active]="themeSvc.mode() === t.id"
+                      (click)="pickTheme(t.id)"
+                    >
+                      <span class="theme-option-emoji">{{ t.emoji }}</span>
+                      <span class="theme-option-body">
+                        <strong>{{ t.label }}</strong>
+                        <span>{{ t.hint }}</span>
+                      </span>
+                      @if (themeSvc.mode() === t.id) { <span class="theme-option-check">✓</span> }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
             <div class="avatar" title="Razmik">RC</div>
           </div>
         </header>
@@ -129,6 +153,21 @@ interface NavItem {
 })
 export class ShellComponent {
   protected readonly collapsed = signal(false);
+  protected readonly themeSvc = inject(ThemeService);
+  protected readonly themes = THEME_OPTIONS;
+  protected readonly themeMenuOpen = signal(false);
+
+  @HostListener('document:click')
+  closeThemeMenu() { this.themeMenuOpen.set(false); }
+
+  protected activeThemeEmoji(): string {
+    return this.themes.find((t) => t.id === this.themeSvc.mode())?.emoji ?? '🌙';
+  }
+
+  protected pickTheme(id: ThemeMode) {
+    this.themeSvc.set(id);
+    this.themeMenuOpen.set(false);
+  }
 
   protected readonly navGroups: { title: string; items: NavItem[] }[] = [
     {

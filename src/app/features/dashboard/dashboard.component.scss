@@ -4,7 +4,7 @@
   position: relative;
   border-radius: var(--r-2xl);
   padding: 2rem 2.4rem;
-  background: linear-gradient(135deg, rgba(15, 18, 48, 0.65) 0%, rgba(20, 24, 60, 0.45) 100%);
+  background: linear-gradient(135deg, rgba(15, 18, 48, 0.65) 0%, rgba(var(--surface-rgb), 0.45) 100%);
   border: 1px solid var(--border);
   overflow: hidden;
   display: grid;
@@ -71,7 +71,7 @@
 }
 .stat-bar {
   height: 4px;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(var(--wash-rgb), 0.05);
   border-radius: 99px;
   margin-top: 0.85rem;
   overflow: hidden;
@@ -140,7 +140,7 @@
   justify-content: center;
   opacity: 0;
   transition: opacity 0.2s;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(var(--wash-rgb), 0.12);
 }
 .project-card:hover .play { opacity: 1; }
 .project-body { padding: 1rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
@@ -160,7 +160,7 @@
   width: 14px;
   height: 14px;
   border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--wash-rgb), 0.1);
 }
 .provider-row {
   display: flex;
@@ -259,12 +259,12 @@
   padding: 0.75rem 0.85rem;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(var(--wash-rgb), 0.03);
   text-decoration: none;
   color: inherit;
   transition: all 0.18s;
 }
-.quick-action:hover { border-color: var(--border-strong); background: rgba(255, 255, 255, 0.06); transform: translateX(2px); }
+.quick-action:hover { border-color: var(--border-strong); background: rgba(var(--wash-rgb), 0.06); transform: translateX(2px); }
 .qa-icon {
   width: 36px;
   height: 36px;

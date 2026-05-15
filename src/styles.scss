@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 :root {
+  color-scheme: dark;
   /* base palette */
   --bg-0: #050613;
   --bg-1: #0a0c1f;
@@ -10,6 +11,13 @@
   --bg-glass-strong: rgba(20, 24, 60, 0.78);
   --border: rgba(140, 160, 255, 0.14);
   --border-strong: rgba(140, 160, 255, 0.28);
+
+  /* Theme-aware RGB triplets used by components via rgba(var(--surface-rgb), α).
+   * Surface = the panel/card color. Deep = even darker backdrop (modals, video bg).
+   * Wash = a subtle overlay tint applied with low alpha (was always white on dark). */
+  --surface-rgb: 10, 13, 35;
+  --deep-rgb: 5, 6, 19;
+  --wash-rgb: 255, 255, 255;
 
   /* text */
   --text-1: #f1f3ff;
@@ -52,6 +60,135 @@
   --font-display: 'Space Grotesk', 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+/* =========================================================================
+   THEME: LIGHT — clean modern light mode (Linear / Vercel / Notion vibes).
+   AA contrast on body text against the lightest surface.
+   ========================================================================= */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-0: #f7f8fb;
+  --bg-1: #ffffff;
+  --bg-2: #f1f3f9;
+  --bg-3: #e4e7f0;
+  --bg-glass: rgba(255, 255, 255, 0.72);
+  --bg-glass-strong: rgba(255, 255, 255, 0.92);
+  --border: rgba(20, 24, 60, 0.10);
+  --border-strong: rgba(20, 24, 60, 0.20);
+
+  /* Tightened for WCAG AA on white surfaces. */
+  --text-1: #0a0c1f;   /* body — ~17:1 against bg-1 */
+  --text-2: #2e3160;   /* secondary — ~9:1 */
+  --text-3: #4d5079;   /* tertiary — ~6:1 */
+  --text-mute: #5e6188; /* muted UI labels — ~4.6:1 (passes AA for small text) */
+
+  /* Neons dimmed to clear AA contrast on light surfaces. */
+  --neon-violet: #6d28d9;
+  --neon-magenta: #be185d;
+  --neon-cyan: #0e7490;
+  --neon-blue: #2563eb;
+  --neon-green: #047857;
+  --neon-amber: #b45309;
+  --neon-rose: #be123c;
+
+  --grad-card: linear-gradient(135deg, rgba(109, 40, 217, 0.06) 0%, rgba(14, 116, 144, 0.05) 100%);
+  --grad-aurora: radial-gradient(at 20% 0%, rgba(109, 40, 217, 0.08) 0px, transparent 50%),
+                 radial-gradient(at 80% 0%, rgba(190, 24, 93, 0.06) 0px, transparent 50%),
+                 radial-gradient(at 50% 100%, rgba(14, 116, 144, 0.06) 0px, transparent 50%);
+
+  --shadow-soft: 0 6px 22px rgba(20, 24, 60, 0.08);
+  --shadow-glow-violet: 0 0 30px rgba(109, 40, 217, 0.18);
+  --shadow-glow-cyan: 0 0 30px rgba(14, 116, 144, 0.18);
+
+  /* Light-mode RGB triplets. Surface = clean off-white, deep = soft grey, wash = ink. */
+  --surface-rgb: 247, 248, 251;
+  --deep-rgb: 228, 231, 240;
+  --wash-rgb: 20, 24, 60;
+}
+
+/* =========================================================================
+   THEME: STUDIO — warm dark mode. Feels like a colorist's grading suite.
+   Same brand neons against amber-tinted dark surfaces.
+   ========================================================================= */
+:root[data-theme='studio'] {
+  color-scheme: dark;
+  --bg-0: #18120c;
+  --bg-1: #1f1812;
+  --bg-2: #2a2118;
+  --bg-3: #362a1d;
+  --bg-glass: rgba(36, 28, 20, 0.65);
+  --bg-glass-strong: rgba(36, 28, 20, 0.85);
+  --border: rgba(255, 200, 140, 0.10);
+  --border-strong: rgba(255, 200, 140, 0.22);
+
+  --text-1: #fdf4e3;
+  --text-2: #d4b896;
+  --text-3: #9a836a;
+  --text-mute: #5e4e3d;
+
+  /* Brand neons stay vivid — they pop against the warm dark like neon signs. */
+  --neon-amber: #fbbf24;
+  --neon-rose: #fb7185;
+
+  --grad-card: linear-gradient(135deg, rgba(251, 191, 36, 0.10) 0%, rgba(236, 72, 153, 0.06) 100%);
+  --grad-aurora: radial-gradient(at 20% 0%, rgba(251, 191, 36, 0.18) 0px, transparent 50%),
+                 radial-gradient(at 80% 0%, rgba(236, 72, 153, 0.16) 0px, transparent 50%),
+                 radial-gradient(at 50% 100%, rgba(139, 92, 246, 0.14) 0px, transparent 50%);
+
+  --shadow-soft: 0 6px 28px rgba(0, 0, 0, 0.45);
+  --shadow-glow-violet: 0 0 40px rgba(251, 191, 36, 0.28);
+  --shadow-glow-cyan: 0 0 40px rgba(139, 92, 246, 0.28);
+
+  /* Studio theme — warm-dark RGB triplets. */
+  --surface-rgb: 36, 28, 20;
+  --deep-rgb: 18, 14, 9;
+  --wash-rgb: 255, 220, 170;
+}
+
+/* =========================================================================
+   THEME: BLACK — true OLED black. Pure #000 surfaces, high-contrast neons.
+   Different from Dark (which has a blue-indigo base) — Black is colorless.
+   ========================================================================= */
+:root[data-theme='black'] {
+  color-scheme: dark;
+  --bg-0: #000000;
+  --bg-1: #0a0a0a;
+  --bg-2: #141414;
+  --bg-3: #1c1c1c;
+  --bg-glass: rgba(20, 20, 20, 0.7);
+  --bg-glass-strong: rgba(20, 20, 20, 0.92);
+  --border: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.22);
+
+  --text-1: #fafafa;
+  --text-2: #b0b0b0;
+  --text-3: #808080;
+  --text-mute: #5a5a5a;
+
+  /* Slightly punchier neons against pure black. */
+  --neon-violet: #a78bfa;
+  --neon-magenta: #f472b6;
+  --neon-cyan: #67e8f9;
+  --neon-blue: #60a5fa;
+  --neon-green: #6ee7b7;
+  --neon-amber: #fcd34d;
+  --neon-rose: #fda4af;
+
+  --grad-primary: linear-gradient(135deg, #a78bfa 0%, #f472b6 50%, #fcd34d 100%);
+  --grad-secondary: linear-gradient(135deg, #67e8f9 0%, #60a5fa 50%, #a78bfa 100%);
+  --grad-card: linear-gradient(135deg, rgba(167, 139, 250, 0.10) 0%, rgba(103, 232, 249, 0.06) 100%);
+  --grad-aurora: radial-gradient(at 20% 0%, rgba(167, 139, 250, 0.20) 0px, transparent 50%),
+                 radial-gradient(at 80% 0%, rgba(244, 114, 182, 0.14) 0px, transparent 50%),
+                 radial-gradient(at 50% 100%, rgba(103, 232, 249, 0.14) 0px, transparent 50%);
+
+  --shadow-soft: 0 6px 28px rgba(0, 0, 0, 0.7);
+  --shadow-glow-violet: 0 0 40px rgba(167, 139, 250, 0.4);
+  --shadow-glow-cyan: 0 0 40px rgba(103, 232, 249, 0.4);
+
+  --surface-rgb: 22, 22, 22;
+  --deep-rgb: 0, 0, 0;
+  --wash-rgb: 255, 255, 255;
 }
 
 * {
@@ -109,7 +246,7 @@ button { font-family: var(--font-body); cursor: pointer; }
 
 input, textarea, select {
   font-family: var(--font-body);
-  background: rgba(10, 13, 35, 0.6);
+  background: rgba(var(--surface-rgb), 0.6);
   color: var(--text-1);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
@@ -119,10 +256,11 @@ input, textarea, select {
   font-size: 0.92rem;
   width: 100%;
 }
+input::placeholder, textarea::placeholder { color: var(--text-3); opacity: 1; }
 input:focus, textarea:focus, select:focus {
   border-color: rgba(139, 92, 246, 0.55);
   box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
-  background: rgba(10, 13, 35, 0.85);
+  background: rgba(var(--surface-rgb), 0.85);
 }
 textarea { resize: vertical; min-height: 80px; line-height: 1.55; }
 
@@ -179,13 +317,13 @@ label.field {
   padding: 0.65rem 1.1rem;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--wash-rgb), 0.04);
   color: var(--text-1);
   transition: all 0.2s ease;
   cursor: pointer;
   white-space: nowrap;
 }
-.btn:hover { background: rgba(255, 255, 255, 0.08); border-color: var(--border-strong); transform: translateY(-1px); }
+.btn:hover { background: rgba(var(--wash-rgb), 0.08); border-color: var(--border-strong); transform: translateY(-1px); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
 .btn.primary {
@@ -219,8 +357,8 @@ label.field {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(5, 6, 19, 0.72);
+  border: 1px solid rgba(var(--wash-rgb), 0.22);
+  background: rgba(var(--deep-rgb), 0.72);
   backdrop-filter: blur(6px);
   color: var(--text-1);
   border-radius: 8px;
@@ -245,7 +383,7 @@ label.field {
   padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: rgba(10, 13, 35, 0.6);
+  background: rgba(var(--surface-rgb), 0.6);
 }
 .chip-input input {
   flex: 1;
@@ -318,9 +456,9 @@ label.field {
 }
 .shimmer {
   background: linear-gradient(90deg,
-    rgba(255,255,255,0.04) 0%,
+    rgba(var(--wash-rgb), 0.04) 0%,
     rgba(139, 92, 246, 0.18) 50%,
-    rgba(255,255,255,0.04) 100%);
+    rgba(var(--wash-rgb), 0.04) 100%);
   background-size: 200% 100%;
   animation: shimmer 2s linear infinite;
 }
@@ -396,8 +534,8 @@ label.field {
   justify-content: center;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--wash-rgb), 0.04);
   color: var(--text-2);
   transition: all 0.18s;
 }
-.iconbtn:hover { color: var(--text-1); background: rgba(255, 255, 255, 0.08); }
+.iconbtn:hover { color: var(--text-1); background: rgba(var(--wash-rgb), 0.08); }
