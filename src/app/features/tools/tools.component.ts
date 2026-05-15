@@ -19,8 +19,9 @@ interface ToolCard {
       <div class="eyebrow">Workshop</div>
       <h1 style="margin-top: 0.3rem">Tools</h1>
       <p class="muted" style="margin-top: 0.4rem; max-width: 56ch">
-        Standalone utilities that improve any image you bring into CineFlow — from
-        multi-angle reference shots to face refinement and consent-aware upload checks.
+        Quick utilities to fix, edit, or remake an image or clip — without
+        starting a full project. Use any of them on their own, or as part
+        of a bigger video.
       </p>
     </header>
 
@@ -127,19 +128,19 @@ export class ToolsComponent {
   protected readonly tools: ToolCard[] = [
     {
       path: 'camera-angles',
-      title: 'Camera angle generator',
-      tagline: 'Multi-view shots',
+      title: 'Different angles',
+      tagline: 'One photo → many angles',
       description:
-        'Upload one image and produce variations from up to 9 camera angles — front, 3/4, profiles, low/high, dutch — in a single batch.',
+        'Upload one photo and get the same subject from up to 9 angles — front, profile, low, high — in one shot.',
       accent: 'violet',
       emoji: '🎥',
     },
     {
       path: 'skin-enhancer',
-      title: 'Skin & face enhancer',
-      tagline: 'Face refinement',
+      title: 'Polish a face',
+      tagline: 'Cleaner skin, sharper face',
       description:
-        'Generate three refined face variants of any portrait. Side-by-side compare and pick the look you want to keep.',
+        'Get three cleaned-up versions of a portrait. Compare them side by side and pick the one you like.',
       accent: 'cyan',
       emoji: '✨',
     },
@@ -148,7 +149,7 @@ export class ToolsComponent {
       title: 'Image editor',
       tagline: 'Expand · Erase · Replace · Upscale',
       description:
-        'One canvas, four modes. Resize the frame and let AI fill it, erase an object cleanly, replace it with a prompt or reference image, or upscale 2× / 4× / 8× — chain edits without re-uploading.',
+        'One canvas, four moves. Expand the frame and let AI fill it, erase something, replace it with a prompt or photo, or make the whole image up to 8× sharper.',
       accent: 'cyan',
       emoji: '🛠️',
     },
@@ -157,25 +158,34 @@ export class ToolsComponent {
       title: 'Audio editor',
       tagline: 'Trim · Stretch · Loop',
       description:
-        'Listen, trim, stretch or loop any audio file. Set fade in/out, normalize loudness, change speed — apply edits straight back into a scene layer or save to library.',
+        'Listen to any audio file, trim it, fade it in or out, loop it, change the speed. Save it to your media or drop it straight into a scene.',
       accent: 'amber',
       emoji: '🎚',
     },
     {
       path: 'video-editor',
       title: 'Video editor',
-      tagline: 'Multi-track · AI-aware',
+      tagline: 'Multi-track timeline',
       description:
-        'CapCut-style timeline with video, audio, and SFX tracks. Drag, resize and snap clips — resizing past the source asks the AI to extend or shorten the video. Remove or replace objects with a prompt.',
+        'CapCut-style timeline with one video lane plus audio and SFX. Drag, resize, snap clips. Make a clip longer than the source and AI extends the video for you. Remove or swap objects with a prompt.',
       accent: 'violet',
       emoji: '🎞',
     },
     {
-      path: 'eligibility',
-      title: 'Image eligibility checker',
-      tagline: 'Consent & rights',
+      path: 'video-clone',
+      title: 'Remake a video',
+      tagline: 'Your clip → a new version',
       description:
-        'Verify an image against third-party face, NSFW, watermark, and minor-detection checks before it enters your library.',
+        'Drop in any video and remake it — same shots, new style. Choose how it rebuilds (whole video, keyframes, or style-only), add a prompt, pick the people in it, and decide whether to keep the original voice and music.',
+      accent: 'cyan',
+      emoji: '🪞',
+    },
+    {
+      path: 'eligibility',
+      title: 'Safety check',
+      tagline: 'Is this image OK to use?',
+      description:
+        'Before you use a photo, run it through quick checks — faces, sensitive content, watermarks, and minors — so you know whether you can legally include it.',
       accent: 'amber',
       emoji: '🛡️',
     },

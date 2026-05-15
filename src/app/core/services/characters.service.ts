@@ -35,6 +35,25 @@ export interface GenerateImageRequest {
   angles?: CameraAngle[];
 }
 
+/** A face the backend detected in a source video, before the user
+ *  decides whether to save it as a Character. */
+export interface DetectedCharacter {
+  /** Temporary id — only valid until the user saves or rejects. */
+  id: string;
+  /** Cropped face thumbnail. */
+  faceUri: string;
+  /** Additional sharp/well-lit frames from across the video. */
+  bestFrames: string[];
+  /** Heuristic suggestions the user can keep or edit. */
+  suggestedName?: string;
+  suggestedAge?: string;
+  suggestedGender?: string;
+  /** Backend's confidence + summary; surfaced in the UI as a hint. */
+  confidence: number;
+  /** Whether at least one frame is eligibility-blocked. */
+  blocked: boolean;
+}
+
 const SEED_CHARACTERS: CharacterProfile[] = [
   {
     id: 'char-1',
@@ -244,5 +263,62 @@ export class CharactersService {
   private describeAngle(angle: CameraAngle): string {
     const found = CAMERA_ANGLE_PRESETS.find((a) => a.id === angle);
     return found ? found.label.toLowerCase() : angle.replace(/_/g, ' ');
+  }
+
+  /**
+   * POST /api/v1/characters/extract-from-video
+   * Backend pipeline (real-impl notes):
+   *   1. Detect & track faces across frames (DeepFace / FaceNet).
+   *   2. Cluster by identity, keep top-N clusters by visibility.
+   *   3. For each cluster, pick 4-6 sharp / multi-angle keyframes.
+   *   4. Run each frame through the eligibility check.
+   *   5. Optionally separate dialogue and attach a voice sample.
+   */
+  detectCharactersFromVideo(_videoUri: string): Observable<DetectedCharacter[]> {
+    // Mock: pretend the backend pulled 2-3 distinct faces from the clip.
+    const seedTime = Date.now();
+    const count = 2 + Math.floor(Math.random() * 2);
+    const detections: DetectedCharacter[] = Array.from({ length: count }).map((_, i) => {
+      const baseIdx = (seedTime + i * 3) % PORTRAIT_POOL.length;
+      const bestFrames = [
+        PORTRAIT_POOL[baseIdx],
+        PORTRAIT_POOL[(baseIdx + 1) % PORTRAIT_POOL.length],
+        PORTRAIT_POOL[(baseIdx + 2) % PORTRAIT_POOL.length],
+        PORTRAIT_POOL[(baseIdx + 3) % PORTRAIT_POOL.length],
+      ];
+      const placeholderNames = ['Person A', 'Person B', 'Person C', 'Person D'];
+      const ageBuckets = ['20s', '30s', '40s', 'Late 20s', 'Mid 30s'];
+      const genders = ['Female', 'Male', 'Non-binary'];
+      return {
+        id: `det-${seedTime}-${i}`,
+        faceUri: bestFrames[0],
+        bestFrames,
+        suggestedName: placeholderNames[i] ?? `Person ${i + 1}`,
+        suggestedAge: ageBuckets[(seedTime + i) % ageBuckets.length],
+        suggestedGender: genders[(seedTime + i) % genders.length],
+        confidence: 0.72 + Math.random() * 0.26,
+        blocked: false,
+      };
+    });
+    return of(detections).pipe(delay(1100));
+  }
+
+  /** Persist a detected character into the library and seed its reference
+   *  images from the bestFrames the backend returned. */
+  saveDetected(
+    det: DetectedCharacter,
+    edits: Partial<CharacterProfile> & { name: string },
+  ): CharacterProfile {
+    const profile = this.create({ ...edits, name: edits.name });
+    det.bestFrames.forEach((uri) => {
+      this.addImageFromSource(profile.id, {
+        uri,
+        thumbnail: uri,
+        prompt: `extracted from source video · ${edits.name}`,
+        provider: 'video-detection',
+        model: 'face-tracker',
+      });
+    });
+    return profile;
   }
 }

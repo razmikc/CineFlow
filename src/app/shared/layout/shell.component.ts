@@ -33,7 +33,7 @@ interface NavItem {
           @if (!collapsed()) {
             <div class="brand-text">
               <div class="brand-name">CineFlow</div>
-              <div class="brand-tag">AI Video Orchestration</div>
+              <div class="brand-tag">AI video orchestra</div>
             </div>
           }
         </div>
@@ -136,16 +136,16 @@ export class ShellComponent {
       items: [
         { label: 'Dashboard', path: '/dashboard', icon: this.icon('dashboard') },
         { label: 'New project', path: '/projects/new', icon: this.icon('add') },
+        { label: 'Draft projects', path: '/drafts', icon: this.icon('draft') },
+        { label: 'Complete projects', path: '/videos', icon: this.icon('video') },
       ],
     },
     {
-      title: 'Library',
+      title: 'My library',
       items: [
         { label: 'Characters', path: '/characters', icon: this.icon('user') },
-        { label: 'Asset library', path: '/assets', icon: this.icon('image') },
+        { label: 'Assets', path: '/assets', icon: this.icon('image') },
         { label: 'AI models', path: '/models', icon: this.icon('chip'), badge: '13' },
-        { label: 'Draft projects', path: '/drafts', icon: this.icon('draft') },
-        { label: 'Complete projects', path: '/videos', icon: this.icon('video') },
       ],
     },
     {
@@ -153,6 +153,7 @@ export class ShellComponent {
       items: [
         { label: 'Image', path: '/one-shot/image', icon: this.icon('imagegen') },
         { label: 'Video', path: '/one-shot/video', icon: this.icon('video') },
+        { label: 'Audio', path: '/one-shot/audio', icon: this.icon('audio') },
       ],
     },
     {
@@ -163,6 +164,7 @@ export class ShellComponent {
         { label: 'Image editor', path: '/tools/image-editor', icon: this.icon('editor') },
         { label: 'Audio editor', path: '/tools/audio-editor', icon: this.icon('audio') },
         { label: 'Video editor', path: '/tools/video-editor', icon: this.icon('video') },
+        { label: 'Video clone', path: '/tools/video-clone', icon: this.icon('clone') },
         { label: 'Eligibility check', path: '/tools/eligibility', icon: this.icon('shield') },
       ],
     },
@@ -198,6 +200,7 @@ export class ShellComponent {
       video: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="11" height="10" rx="1.5"/><path d="M13.5 9l4-2v6l-4-2z" stroke-linejoin="round"/></svg>`,
       draft: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 3h7l4 4v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke-linejoin="round"/><path d="M12 3v4h4M8 12l2 2 3-4" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
       oneshot: `<svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 8 L10 2 L17 8 L17 17 L3 17 Z" stroke-linejoin="round"/><circle cx="10" cy="12" r="3"/><path d="M10 12 L13 9" stroke-linecap="round"/></svg>`,
+      clone: `<svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="5" width="9" height="9" rx="1.5"/><rect x="8.5" y="6.5" width="9" height="9" rx="1.5"/></svg>`,
     };
     return map[kind] ?? '';
   }

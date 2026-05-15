@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CAMERA_ANGLE_PRESETS,
   CharactersService,
@@ -27,10 +29,11 @@ import {
   CharacterImage,
   CharacterProfile,
 } from '../../core/models/contract.model';
+import { CharacterExtractDialogComponent } from '../../shared/character-extract-dialog.component';
 
 @Component({
   selector: 'app-characters',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, CharacterExtractDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (selected(); as character) {
@@ -322,10 +325,19 @@ import {
       <header class="row" style="justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem">
         <div>
           <h1>Characters</h1>
-          <p class="muted" style="margin-top: 0.4rem">Build a roster of reusable characters with reference images and traits. Reuse them across scenes for continuity.</p>
+          <p class="muted" style="margin-top: 0.4rem">Build a roster of characters you can reuse across projects. Each one keeps the same face, wardrobe, and voice across every scene.</p>
         </div>
-        <button class="btn primary" (click)="createCharacter()">+ New character</button>
+        <div class="row" style="gap: 0.5rem">
+          <button class="btn ghost sm" (click)="triggerExtractUpload()">🎞 Extract from video</button>
+          <button class="btn primary" (click)="createCharacter()">+ New character</button>
+        </div>
       </header>
+      <input #extractVideoInput type="file" accept="video/*" hidden (change)="onExtractFile($event)"/>
+      <app-character-extract-dialog
+        [open]="extractOpen()"
+        [videoUri]="extractVideoUri()"
+        (close)="closeExtract()"
+      />
 
       <div class="row filters">
         <div class="search-box">
@@ -386,6 +398,8 @@ export class CharactersComponent {
   private readonly assetsSrv = inject(AssetsService);
   private readonly eligibilitySrv = inject(ImageEligibilityService);
   private readonly editorBridge = inject(ImageEditorBridgeService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly eligibilityNotice = signal<{
     fileName: string;
@@ -396,6 +410,30 @@ export class CharactersComponent {
   } | null>(null);
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+  private readonly extractVideoInput = viewChild<ElementRef<HTMLInputElement>>('extractVideoInput');
+
+  protected readonly extractOpen = signal(false);
+  protected readonly extractVideoUri = signal<string | null>(null);
+
+  protected triggerExtractUpload() { this.extractVideoInput()?.nativeElement.click(); }
+  protected onExtractFile(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') return;
+      this.extractVideoUri.set(result);
+      this.extractOpen.set(true);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+  protected closeExtract() {
+    this.extractOpen.set(false);
+    this.extractVideoUri.set(null);
+  }
 
   protected readonly cameraAngles = CAMERA_ANGLE_PRESETS;
   protected readonly search = signal('');
@@ -438,6 +476,15 @@ export class CharactersComponent {
   constructor() {
     const firstModel = this.imageModels()[0];
     if (firstModel) this.modelId.set(firstModel.id);
+    // /characters?id=char-xxx opens that character's detail view directly.
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      const id = params.get('id');
+      if (id && this.charactersSrv.get(id)) {
+        this.selectedId.set(id);
+        this.prompt.set('');
+        this.multiAngle.set(false);
+      }
+    });
   }
 
   protected open(c: CharacterProfile) {
@@ -448,6 +495,13 @@ export class CharactersComponent {
 
   protected closeDetail() {
     this.selectedId.set(null);
+    // Drop the ?id= query param so reload doesn't re-open the detail.
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { id: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   protected createCharacter() {

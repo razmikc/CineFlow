@@ -41,6 +41,12 @@ export class VideoEditorService {
   /** Static asset bin — would be a server query in real life. */
   readonly assets = signal<EditorAsset[]>(this.seedAssets());
 
+  constructor() {
+    // Persist the sanitized state so any localStorage migration sticks
+    // (e.g. "Video 1 / Video 2" rewrites to a single "Video").
+    this.persist();
+  }
+
   /** GET /api/v1/editor/timelines/{id} */
   load(): Observable<Timeline> {
     return of(this.timeline()).pipe(delay(120));
@@ -178,13 +184,22 @@ export class VideoEditorService {
     return of(op).pipe(delay(80));
   }
 
-  /** POST /api/v1/editor/timelines/{id}/tracks */
+  /**
+   * POST /api/v1/editor/timelines/{id}/tracks
+   * Editor convention: exactly one video track is allowed — extra video
+   * tracks are silently rejected (returns the existing video track).
+   */
   addTrack(kind: TrackKind): Observable<Track> {
+    const sameKindCount = this.timeline().tracks.filter((t) => t.kind === kind).length;
+    if (kind === 'video' && sameKindCount >= 1) {
+      const existing = this.timeline().tracks.find((t) => t.kind === 'video')!;
+      return of(existing).pipe(delay(40));
+    }
     const id = `tr-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
     const track: Track = {
       id,
       kind,
-      label: this.defaultTrackLabel(kind, this.timeline().tracks.filter((t) => t.kind === kind).length + 1),
+      label: this.defaultTrackLabel(kind, sameKindCount + 1),
       heightPx: kind === 'video' ? 64 : 48,
       muted: false,
       locked: false,
@@ -330,17 +345,38 @@ export class VideoEditorService {
     if (typeof localStorage === 'undefined') return this.seedTimeline();
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw) as Timeline;
+      if (raw) return this.sanitize(JSON.parse(raw) as Timeline);
     } catch {
       /* corrupt blob — fall through */
     }
     return this.seedTimeline();
   }
 
+  /**
+   * Bring a persisted timeline up to the current invariants:
+   *   1. Exactly one video track — extras merge their clips into the first.
+   *   2. The single video track is always labelled "Video".
+   */
+  private sanitize(t: Timeline): Timeline {
+    if (!t || !Array.isArray(t.tracks)) return this.seedTimeline();
+    const videoTracks = t.tracks.filter((tr) => tr.kind === 'video');
+    if (videoTracks.length === 0) return t;
+    const [primary, ...extras] = videoTracks;
+    const mergedClips = [
+      ...primary.clips,
+      ...extras.flatMap((tr) => tr.clips.map((c) => ({ ...c, trackId: primary.id }))),
+    ];
+    const tracks = t.tracks
+      .filter((tr) => tr.kind !== 'video' || tr.id === primary.id)
+      .map((tr) => (tr.id === primary.id ? { ...tr, label: 'Video', clips: mergedClips } : tr));
+    return { ...t, tracks };
+  }
+
   private defaultTrackLabel(kind: TrackKind, index: number): string {
     switch (kind) {
       case 'video':
-        return `Video ${index}`;
+        // Only one video track is ever allowed — never number it.
+        return 'Video';
       case 'audio':
         return `Audio ${index}`;
       case 'sfx':
@@ -350,7 +386,7 @@ export class VideoEditorService {
 
   private seedTimeline(): Timeline {
     const tracks: Track[] = [
-      { id: 'tr-v1', kind: 'video', label: 'Video 1', heightPx: 64, muted: false, locked: false, clips: [] },
+      { id: 'tr-v1', kind: 'video', label: 'Video', heightPx: 64, muted: false, locked: false, clips: [] },
       { id: 'tr-a1', kind: 'audio', label: 'Music',   heightPx: 48, muted: false, locked: false, clips: [] },
       { id: 'tr-s1', kind: 'sfx',   label: 'SFX',     heightPx: 44, muted: false, locked: false, clips: [] },
     ];

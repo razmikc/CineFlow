@@ -39,12 +39,12 @@ const LIGHTING_VARIANTS = [
               <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m12 5-5 5 5 5" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              Back to wizard
+              Back to my project
             </a>
-            <h1>Plan review</h1>
+            <h1>The look & the scenes</h1>
             <p class="muted">
-              Visual identity for the whole video, plus the scene-by-scene plan.
-              Read it through, then continue to scene 1 — or send it back for a regen.
+              Here's the overall look for your video and how your scenes break down.
+              Read it through, change what you want, then jump into scene 1.
             </p>
           </div>
           <div class="row">

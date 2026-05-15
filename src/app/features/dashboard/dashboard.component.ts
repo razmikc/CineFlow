@@ -12,11 +12,12 @@ import { CreativeContract } from '../../core/models/contract.model';
   template: `
     <section class="hero">
       <div class="hero-content">
-        <div class="eyebrow">CineFlow · v0.1 preview</div>
-        <h1>Direct your video like <span class="gradient-text">code</span>.</h1>
+        <div class="eyebrow">CineFlow · preview</div>
+        <h1>Make the <span class="gradient-text">video</span> you imagined.</h1>
         <p class="hero-sub">
-          Versioned, editable creative contracts. Multi-model orchestration. Scene-by-scene approval.
-          Generate professional AI video without losing creative control.
+          Plan your video, scene by scene. Pick a look, pick your cast,
+          review each shot before you make it. Built for creators who want
+          AI to do the heavy lifting without losing the creative call.
         </p>
         <div class="row" style="gap: 0.75rem; margin-top: 1.4rem">
           <a class="btn primary lg" routerLink="/projects/new">
@@ -25,7 +26,7 @@ import { CreativeContract } from '../../core/models/contract.model';
             </svg>
             New project
           </a>
-          <a class="btn lg" routerLink="/assets">Browse assets</a>
+          <a class="btn lg" routerLink="/assets">Browse my media</a>
         </div>
       </div>
       <div class="hero-art" aria-hidden="true">
@@ -51,8 +52,8 @@ import { CreativeContract } from '../../core/models/contract.model';
 
     <section class="section-row">
       <div>
-        <div class="section-title">Active projects</div>
-        <p class="muted" style="font-size: 0.85rem">Your in-progress creative contracts.</p>
+        <div class="section-title">Projects in progress</div>
+        <p class="muted" style="font-size: 0.85rem">Pick up where you left off.</p>
       </div>
       <a class="btn ghost sm" routerLink="/projects/new">+ New project</a>
     </section>

@@ -145,10 +145,19 @@ interface Mark {
                 [style.left.%]="(currentTime() / Math.max(1, duration())) * 100"
               ></div>
             </div>
-            <div class="row" style="justify-content: space-between; font-size: 0.78rem; margin-top: 0.4rem">
-              <span><span class="muted">In</span> <span class="mono">{{ formatTime(trimStart()) }}</span></span>
-              <span><span class="muted">Selected</span> <span class="mono">{{ formatTime(trimEnd() - trimStart()) }}</span></span>
-              <span><span class="muted">Out</span> <span class="mono">{{ formatTime(trimEnd()) }}</span></span>
+            <div class="trim-readout">
+              <div class="trim-stat">
+                <span class="trim-stat-label">In</span>
+                <span class="trim-stat-value">{{ formatTime(trimStart()) }}</span>
+              </div>
+              <div class="trim-stat center">
+                <span class="trim-stat-label">Selected</span>
+                <span class="trim-stat-value">{{ formatTime(trimEnd() - trimStart()) }}</span>
+              </div>
+              <div class="trim-stat right">
+                <span class="trim-stat-label">Out</span>
+                <span class="trim-stat-value">{{ formatTime(trimEnd()) }}</span>
+              </div>
             </div>
           </div>
         </section>
@@ -163,27 +172,47 @@ interface Mark {
             }
           </div>
 
-          <label class="check-row" style="margin-top: 1rem">
-            <input type="checkbox" [ngModel]="fadeIn()" (ngModelChange)="fadeIn.set($event)" />
-            <div>
-              <div class="check-title">Fade in (first second)</div>
-              <div class="muted" style="font-size: 0.74rem">Ramp volume from 0 to full at the in-point</div>
-            </div>
-          </label>
-          <label class="check-row" style="margin-top: 0.4rem">
-            <input type="checkbox" [ngModel]="fadeOut()" (ngModelChange)="fadeOut.set($event)" />
-            <div>
-              <div class="check-title">Fade out (last second)</div>
-              <div class="muted" style="font-size: 0.74rem">Ramp volume to 0 at the out-point</div>
-            </div>
-          </label>
-          <label class="check-row" style="margin-top: 0.4rem">
-            <input type="checkbox" [ngModel]="normalize()" (ngModelChange)="normalize.set($event)" />
-            <div>
-              <div class="check-title">Normalize volume</div>
-              <div class="muted" style="font-size: 0.74rem">Boost loudness to -14 LUFS reference</div>
-            </div>
-          </label>
+          <div class="toggle-grid">
+            <button
+              type="button"
+              class="toggle-card"
+              [class.on]="fadeIn()"
+              (click)="fadeIn.set(!fadeIn())"
+            >
+              <span class="toggle-icon">⤴</span>
+              <div class="toggle-body">
+                <div class="toggle-title">Fade in (first second)</div>
+                <div class="toggle-hint">Ramp volume from 0 to full at the in-point.</div>
+              </div>
+              <span class="toggle-switch" [attr.data-state]="fadeIn() ? 'on' : 'off'"><span class="toggle-knob"></span></span>
+            </button>
+            <button
+              type="button"
+              class="toggle-card"
+              [class.on]="fadeOut()"
+              (click)="fadeOut.set(!fadeOut())"
+            >
+              <span class="toggle-icon">⤵</span>
+              <div class="toggle-body">
+                <div class="toggle-title">Fade out (last second)</div>
+                <div class="toggle-hint">Ramp volume to 0 at the out-point.</div>
+              </div>
+              <span class="toggle-switch" [attr.data-state]="fadeOut() ? 'on' : 'off'"><span class="toggle-knob"></span></span>
+            </button>
+            <button
+              type="button"
+              class="toggle-card"
+              [class.on]="normalize()"
+              (click)="normalize.set(!normalize())"
+            >
+              <span class="toggle-icon">🔊</span>
+              <div class="toggle-body">
+                <div class="toggle-title">Normalize volume</div>
+                <div class="toggle-hint">Boost loudness to −14 LUFS reference.</div>
+              </div>
+              <span class="toggle-switch" [attr.data-state]="normalize() ? 'on' : 'off'"><span class="toggle-knob"></span></span>
+            </button>
+          </div>
 
           <label class="field" style="margin-top: 1rem">Output length target</label>
           <div class="row" style="gap: 0.4rem; flex-wrap: wrap">
@@ -372,12 +401,55 @@ interface Mark {
         font-family: var(--font-mono);
         font-size: 0.74rem;
         color: var(--text-1);
-        background: rgba(5, 6, 19, 0.6);
-        padding: 0.15rem 0.45rem;
+        background: rgba(5, 6, 19, 0.72);
+        padding: 0.15rem 0.5rem;
         border-radius: 999px;
         pointer-events: none;
         user-select: none;
+        white-space: nowrap;
+        max-width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
       }
+      .trim-readout {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+      }
+      .trim-stat {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .trim-stat.center { align-items: center; text-align: center; }
+      .trim-stat.right  { align-items: flex-end;  text-align: right; }
+      .trim-stat-label {
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-2);
+      }
+      .trim-stat-value {
+        font-family: var(--font-mono);
+        font-size: 0.84rem;
+        color: var(--text-1);
+      }
+
+      .toggle-grid { display: grid; grid-template-columns: 1fr; gap: 0.45rem; margin-top: 0.6rem; }
+      .toggle-card { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 0.6rem; padding: 0.6rem 0.75rem; background: rgba(10,13,35,0.55); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; text-align: left; color: var(--text-1); transition: border-color 0.15s, background 0.15s; }
+      .toggle-card:hover { border-color: rgba(139, 92, 246, 0.55); }
+      .toggle-card.on { border-color: rgba(52, 211, 153, 0.55); background: rgba(52, 211, 153, 0.07); }
+      .toggle-icon { font-size: 1.15rem; line-height: 1; opacity: 0.85; }
+      .toggle-card.on .toggle-icon { opacity: 1; }
+      .toggle-body { min-width: 0; }
+      .toggle-title { font-size: 0.86rem; font-weight: 600; line-height: 1.25; }
+      .toggle-hint { font-size: 0.74rem; color: var(--text-2); line-height: 1.4; margin-top: 2px; }
+      .toggle-switch { position: relative; width: 38px; height: 22px; border-radius: 999px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); transition: background 0.18s, border-color 0.18s; flex-shrink: 0; }
+      .toggle-switch[data-state='on'] { background: linear-gradient(135deg, #34d399, #22d3ee); border-color: transparent; }
+      .toggle-knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #f8fafc; box-shadow: 0 1px 3px rgba(0,0,0,0.35); transition: transform 0.18s; }
+      .toggle-switch[data-state='on'] .toggle-knob { transform: translateX(16px); }
       .trim-handle {
         position: absolute;
         top: 0;

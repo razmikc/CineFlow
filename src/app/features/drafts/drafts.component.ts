@@ -17,11 +17,11 @@ import { CreativeContract } from '../../core/models/contract.model';
   template: `
     <header class="drafts-header">
       <div>
-        <div class="eyebrow">Library</div>
-        <h1>Draft projects</h1>
+        <div class="eyebrow">Workspace</div>
+        <h1>Drafts</h1>
         <p class="muted">
-          Saved-but-not-finished projects. Click <strong>Continue</strong> to
-          pick up exactly where you left off.
+          Projects you saved but haven't finished. Hit <strong>Continue</strong> to
+          pick up right where you left off.
         </p>
       </div>
       <div class="row" style="gap: 0.5rem">
@@ -33,10 +33,10 @@ import { CreativeContract } from '../../core/models/contract.model';
     @if (drafts().length === 0) {
       <div class="empty-state card">
         <div class="empty-art">📝</div>
-        <strong>No drafts saved</strong>
+        <strong>Nothing saved yet</strong>
         <p class="muted">
-          Hit <em>Save draft</em> from the wizard, moodboard, or scene workspace
-          and the project will land here.
+          Tap <em>Save draft</em> anywhere while you're working — projects you
+          haven't finished land here.
         </p>
         <a class="btn primary" routerLink="/projects/new">Start a new project</a>
       </div>

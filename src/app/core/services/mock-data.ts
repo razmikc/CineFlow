@@ -262,6 +262,28 @@ export const MOCK_AI_MODELS: AiModel[] = [
     speed: 'high_quality',
     description: 'Frame interpolation and upscaling to 4K.',
   },
+  {
+    id: 'm-runway-v2v',
+    provider: 'runway',
+    name: 'Gen-3 Video Restyle',
+    version: '3.0',
+    capability: 'video_to_video',
+    costPerUnit: 0.85,
+    unit: 'second',
+    speed: 'balanced',
+    description: 'Reads the whole source clip; preserves motion and composition while regenerating the visual style.',
+  },
+  {
+    id: 'm-pika-v2v',
+    provider: 'pika',
+    name: 'Pika v2v',
+    version: '1.5',
+    capability: 'video_to_video',
+    costPerUnit: 0.55,
+    unit: 'second',
+    speed: 'fast',
+    description: 'Fast keyframe-driven v2v. Best for short clips with strong subject motion.',
+  },
 ];
 
 export const MOCK_ASSETS: Asset[] = [

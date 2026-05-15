@@ -260,7 +260,6 @@ const TRACK_GAP_PX = 6;
         <div class="timeline-toolbar">
           <strong style="font-family: var(--font-display); font-size: 0.84rem">Timeline</strong>
           <div class="row" style="gap: 0.3rem">
-            <button class="btn ghost sm" (click)="addTrack('video')">+ Video track</button>
             <button class="btn ghost sm" (click)="addTrack('audio')">+ Audio track</button>
             <button class="btn ghost sm" (click)="addTrack('sfx')">+ SFX track</button>
           </div>
@@ -282,7 +281,9 @@ const TRACK_GAP_PX = 6;
                   <button class="iconbtn sm" [title]="tr.locked ? 'Unlock' : 'Lock'" (click)="toggleLock(tr.id)">
                     {{ tr.locked ? '🔒' : '🔓' }}
                   </button>
-                  <button class="iconbtn sm danger" title="Delete track" (click)="removeTrack(tr.id)">×</button>
+                  @if (tr.kind !== 'video') {
+                    <button class="iconbtn sm danger" title="Delete track" (click)="removeTrack(tr.id)">×</button>
+                  }
                 </div>
               </div>
             }

@@ -100,6 +100,13 @@ export const routes: Routes = [
             (m) => m.OneShotVideoComponent,
           ),
       },
+      {
+        path: 'one-shot/audio',
+        loadComponent: () =>
+          import('./features/one-shot/audio-generation.component').then(
+            (m) => m.OneShotAudioComponent,
+          ),
+      },
       // Legacy alias — old image-gen path now lives under One shot.
       { path: 'tools/image-generation', redirectTo: 'one-shot/image', pathMatch: 'full' },
       {
@@ -135,6 +142,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/tools/video-editor/video-editor.component').then(
             (m) => m.VideoEditorComponent,
+          ),
+      },
+      {
+        path: 'tools/video-clone',
+        loadComponent: () =>
+          import('./features/tools/video-clone/video-clone.component').then(
+            (m) => m.VideoCloneToolComponent,
           ),
       },
       // Legacy paths — redirect to the unified editor

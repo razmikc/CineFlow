@@ -16,6 +16,7 @@ import {
   ImageEligibilityService,
 } from '../../../core/services/image-eligibility.service';
 import { AiModel, Asset } from '../../../core/models/contract.model';
+import { PromptEnhancerDialogComponent } from '../../../shared/prompt-enhancer-dialog.component';
 
 type Mode = 'prompt' | 'prompt_plus_refs' | 'refs_only';
 
@@ -58,7 +59,7 @@ const SAMPLE_OUTPUTS = [
 
 @Component({
   selector: 'app-image-generation-tool',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, PromptEnhancerDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header>
@@ -137,7 +138,12 @@ const SAMPLE_OUTPUTS = [
         }
 
         @if (mode() !== 'refs_only') {
-          <div class="eyebrow" style="margin-top: 1rem">{{ mode() === 'prompt' ? '2' : '3' }} · Prompt</div>
+          <div class="row" style="margin-top: 1rem; justify-content: space-between; align-items: center; gap: 0.5rem">
+            <div class="eyebrow">{{ mode() === 'prompt' ? '2' : '3' }} · Prompt</div>
+            <button class="btn ghost sm" type="button" (click)="enhancerOpen.set(true)">
+              ✨ Enhance prompt
+            </button>
+          </div>
           <textarea
             rows="4"
             [ngModel]="prompt()"
@@ -254,6 +260,14 @@ const SAMPLE_OUTPUTS = [
         }
       </section>
     </div>
+
+    <app-prompt-enhancer-dialog
+      mode="image"
+      [open]="enhancerOpen()"
+      (close)="enhancerOpen.set(false)"
+      (insert)="appendToPrompt($event)"
+      (replace)="prompt.set($event)"
+    />
 
     @if (assetPickerOpen()) {
       <div class="modal-backdrop" (click)="closeAssetPicker()">
@@ -547,6 +561,13 @@ export class ImageGenerationToolComponent {
 
   protected readonly mode = signal<Mode>('prompt');
   protected readonly prompt = signal('');
+  protected readonly enhancerOpen = signal(false);
+
+  protected appendToPrompt(extra: string) {
+    if (!extra.trim()) return;
+    const current = this.prompt().trim();
+    this.prompt.set(current ? `${current}, ${extra}` : extra);
+  }
   protected readonly negativePrompt = signal('');
   protected readonly modelId = signal('');
   protected readonly aspectRatio = signal('1:1');

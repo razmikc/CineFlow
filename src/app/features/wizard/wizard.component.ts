@@ -101,38 +101,38 @@ interface WizardStep {
 }
 
 const DEFAULT_STEPS: WizardStep[] = [
-  { key: 'goal', label: 'Goal', sub: 'Pick the kind of video' },
-  { key: 'script', label: 'Script & structure', sub: 'LLM, duration, pacing' },
-  { key: 'style', label: 'Global style', sub: 'Mood, palette, fonts' },
-  { key: 'cinematography', label: 'Cinematic direction', sub: 'Cues AI video models actually respond to' },
-  { key: 'characters', label: 'Characters', sub: 'Reusable avatars & voices' },
-  { key: 'assets', label: 'Assets', sub: 'Reference materials' },
-  { key: 'review', label: 'Review & generate', sub: 'YAML / JSON' },
+  { key: 'goal', label: 'What kind of video', sub: 'Trailer, ad, short, music video…' },
+  { key: 'script', label: 'Story & script', sub: 'Write the idea, pick the length' },
+  { key: 'style', label: 'Look & feel', sub: 'Mood, colors, fonts' },
+  { key: 'cinematography', label: 'Camera & light', sub: 'Tell the AI what shots you want' },
+  { key: 'characters', label: 'Cast', sub: 'People in your video' },
+  { key: 'assets', label: 'My media', sub: 'Reference images, music, clips' },
+  { key: 'review', label: 'Review', sub: 'Check everything before you make it' },
 ];
 
 const YT_SHORT_STEPS: WizardStep[] = [
-  { key: 'goal', label: 'Goal', sub: 'YouTube Short selected' },
-  { key: 'yt_hook', label: 'Hook & topic', sub: 'First 3s + payoff' },
-  { key: 'yt_audio', label: 'Trending audio', sub: 'Pick or generate, snap cuts' },
-  { key: 'yt_style', label: 'Vertical style', sub: '9:16 captions, safe zone' },
-  { key: 'cinematography', label: 'Cinematic direction', sub: 'Cues AI video models actually respond to' },
-  { key: 'characters', label: 'Cast', sub: 'Optional — creator or character' },
-  { key: 'yt_beats', label: 'Beat storyboard', sub: 'Micro-scenes, 1–3s each' },
-  { key: 'yt_cta', label: 'CTA & loop', sub: 'End card + loop back' },
-  { key: 'review', label: 'Review & generate', sub: 'Shorts checklist + YAML' },
+  { key: 'goal', label: 'What kind of video', sub: 'YouTube Short selected' },
+  { key: 'yt_hook', label: 'Hook & topic', sub: 'First 3 seconds + payoff' },
+  { key: 'yt_audio', label: 'Sound', sub: 'Trending track or your own' },
+  { key: 'yt_style', label: 'Look (vertical)', sub: 'Captions, safe-zone, 9:16' },
+  { key: 'cinematography', label: 'Camera & light', sub: 'Tell the AI what shots you want' },
+  { key: 'characters', label: 'Cast', sub: 'You, a creator, or a character' },
+  { key: 'yt_beats', label: 'Quick beats', sub: 'Tiny scenes, 1–3 seconds each' },
+  { key: 'yt_cta', label: 'Call to action', sub: 'End card + loop back' },
+  { key: 'review', label: 'Review', sub: 'Final checks for Shorts' },
 ];
 
 const AD_STEPS: WizardStep[] = [
-  { key: 'goal', label: 'Goal', sub: 'Advertisement selected' },
-  { key: 'ad_brand', label: 'Brand', sub: 'Identity, voice, colors' },
-  { key: 'ad_product', label: 'Product & offer', sub: 'USP, benefits, promo' },
-  { key: 'ad_audience', label: 'Audience & placement', sub: 'Who, where, length' },
-  { key: 'ad_visual', label: 'Visual & compliance', sub: 'Moodboard + disclaimers' },
-  { key: 'cinematography', label: 'Cinematic direction', sub: 'Cues AI video models actually respond to' },
-  { key: 'characters', label: 'Cast', sub: 'Optional — talent or models' },
-  { key: 'ad_structure', label: 'Ad structure', sub: 'Hook → Problem → CTA' },
-  { key: 'ad_variants', label: 'A/B variants', sub: 'Test multiple cuts' },
-  { key: 'review', label: 'Review & generate', sub: 'Compliance + YAML' },
+  { key: 'goal', label: 'What kind of video', sub: 'Advertisement selected' },
+  { key: 'ad_brand', label: 'Your brand', sub: 'Name, voice, colors' },
+  { key: 'ad_product', label: 'Product & offer', sub: 'What you sell, why it matters' },
+  { key: 'ad_audience', label: 'Audience & placement', sub: 'Who, where, how long' },
+  { key: 'ad_visual', label: 'Visual & safety', sub: 'Look + things to avoid' },
+  { key: 'cinematography', label: 'Camera & light', sub: 'Tell the AI what shots you want' },
+  { key: 'characters', label: 'Cast', sub: 'People in the ad' },
+  { key: 'ad_structure', label: 'Ad structure', sub: 'Hook → Problem → Call to action' },
+  { key: 'ad_variants', label: 'A/B variants', sub: 'Test different angles' },
+  { key: 'review', label: 'Review', sub: 'Final checks before you make it' },
 ];
 
 function stepsForGoal(goal: ProjectGoal | undefined): WizardStep[] {
@@ -283,7 +283,7 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
             </button>
             <button class="btn cool" (click)="generateContract()">
               <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3v14M5 3l5 5-5 5M5 17l5-5-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              Generate contract
+              Continue →
             </button>
           </div>
         </header>
@@ -1204,8 +1204,8 @@ const AD_BEAT_SKELETON: { type: AdBeatType; label: string; defaultDuration: numb
               }
 
               @case ('review') {
-                <h2>Review contract</h2>
-                <p class="muted">Inspect, validate, and export your normalized contract. This file becomes the source of truth.</p>
+                <h2>Almost there</h2>
+                <p class="muted">Take a last look. Everything below describes your video — you can keep editing or move on to picking the look.</p>
                 <div class="row" style="margin-top: 1rem; gap: 0.5rem">
                   <button class="btn sm" [class.primary]="format() === 'yaml'" (click)="format.set('yaml')">YAML</button>
                   <button class="btn sm" [class.primary]="format() === 'json'" (click)="format.set('json')">JSON</button>

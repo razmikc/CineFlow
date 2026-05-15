@@ -21,23 +21,22 @@ type ContractFormat = 'yaml' | 'json';
   template: `
     <header class="vid-header">
       <div>
-        <div class="eyebrow">Library</div>
-        <h1>Complete projects</h1>
+        <div class="eyebrow">Workspace</div>
+        <h1>My videos</h1>
         <p class="muted">
-          Every rendered video and the exact contract that produced it. Click a card
-          to play it back next to its JSON / YAML.
+          Every video you've finished. Click a card to play it back and see
+          the exact plan that made it.
         </p>
       </div>
-      <div class="chip cyan">{{ videos().length }} rendered</div>
+      <div class="chip cyan">{{ videos().length }} videos</div>
     </header>
 
     @if (videos().length === 0) {
       <div class="empty-state card">
         <div class="empty-art">🎬</div>
-        <strong>No rendered videos yet</strong>
+        <strong>No videos yet</strong>
         <p class="muted">
-          Finish a project's review step, open its final-video page, hit
-          <em>Generate final video</em>, and it'll show up here with its contract.
+          When you finish a project and hit <em>Make my video</em>, it shows up here.
         </p>
         <a class="btn primary" routerLink="/dashboard">Pick a project to finish</a>
       </div>

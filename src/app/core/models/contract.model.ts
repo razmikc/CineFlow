@@ -618,6 +618,7 @@ export interface AiModel {
   capability:
     | 'text_to_video'
     | 'image_to_video'
+    | 'video_to_video'
     | 'text_to_image'
     | 'voice_clone'
     | 'audio_generation'
